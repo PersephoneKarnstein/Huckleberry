@@ -1,7 +1,9 @@
-import requests, urllib, ast, re, json
+import requests, urllib, ast, re, #json
 from bs4 import BeautifulSoup
 from datetime import datetime as dt
 import numpy as np
+
+from model import *
 
 
 HEADERS = {'Host': 'www.calflora.org',
@@ -24,14 +26,16 @@ com.cfapp.client.wentry.WeedDataService|readPdas|java.util.HashMap/1797211028|I|
 
 url = lambda key_number : f"https://www.calflora.org/cgi-bin/species_query.cgi?where-calrecnum={key_number}"
 
+
 def compose_request(key_number):
     page = requests.get(url(key_number))
     soup = BeautifulSoup(page.content, features="lxml")
     scientific_name = (soup.select_one("#c-about > span").get_text()).strip()
 
     r = requests.post('https://www.calflora.org/app/weeddata', headers=HEADERS, data=payload(scientific_name))
-    data = r
-    return ast.literal_eval(data.text[4:]) #weirdly calflora doesn't return things as json, so we need to convert the string into a list
+    # data = r
+    return ast.literal_eval(r.text[4:]) #weirdly calflora doesn't return things as json, so we need to convert the string into a list
+
 
 def process_request_results(obs_list):
   extracted_data = np.asarray(["lon", "lat"])
@@ -39,36 +43,46 @@ def process_request_results(obs_list):
 
   for i, elem in enumerate(obs_list):
     if isinstance(obs_list[i], float) and isinstance(obs_list[i+1], float): #bc of how the response is structured, this will only grab the lat-lon pairs
-      extracted_data = np.vstack(( extracted_data, np.asarray([obs_list[i], obs_list[i+1]]) ))
+      extracted_data = np.vstack(( extracted_data, np.asarray([float(obs_list[i]), float(obs_list[i+1])]) ))
+
     elif isinstance(elem, list): #finds the weird js list
     #Technically this should be in its own loop through the array, but because we know that the metadata list always comes after the list of coordinates, 
     #we can just have it in the same one
       plant_name = elem[4]
       pattern = re.compile("[0-9]{4}(\-[0-9]{2}){2}") #all the dates are stored as "YYYY-MM-DD"
+      
       for j, metadatum in enumerate(elem):
         if pattern.match(metadatum): 
           obs_date = dt.strptime(metadatum, "%Y-%m-%d")
           datetimes.append(obs_date) 
   
+  undated_obs = len(extracted_data)-len(datetimes)
+  datetimes.extend([None]*undated_obs) #for unknown reasons, sometimes there are fewer metadata than there are observations.
+  #a better implementation would attempt to associate the metadata with a specific lat/lon point based on the descriptive text;
+  #however since the number of observations we will get from CalFlora is much smaller than the number from iNaturalist, and
+  #since the date is arguably the least important of the data collected for each observation, especially as far back in history 
+  #as many of these observations are, for the moment we will just assume that the listing was cut off and that the list of 
+  #n metadata correspond to the *first* n observations.
+  datetimes = np.asarray(datetimes).reshape((len(datetimes),1))
+  
   print(extracted_data,"\n=====================\n",datetimes,
     "\n=====================\n",np.shape(extracted_data), 
-    np.shape(np.asarray(datetimes).reshape((len(datetimes),1))), 
+    np.shape(datetimes), 
     "\n\n\n\n\n\n")
-  extracted_data = np.concatenate( (extracted_data, np.asarray(datetimes).reshape((len(datetimes),1))), axis=1)
+
+  print(f"{undated_obs} dates were unknown.")
+  # extracted_data = extracted_data[:len(datetimes)]
+  extracted_data = np.concatenate( (extracted_data, datetimes), axis=1)
   #so we end up with a np array of elements that look like [lon, lat, datetime]
   return plant_name, extracted_data
 
-def to_json(key_number):
+def to_sql(key_number):
   data = compose_request(key_number)
   plant_name, extracted = process_request_results(data)
 
-  with open('obs_data.json', 'w+') as f:
-    for obs in extracted[1:]:
-      obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":obs[1], "lon":obs[0], "obs_date":obs[2]}
-      one_obs = json.encode(obs_dict)
-      json.dump(one_obs, f)
-
-
+  for obs in extracted[1:]:
+    obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":obs[1], "lon":obs[0], "elev":None, "obs_date":obs[2]}
+      
 
 
 

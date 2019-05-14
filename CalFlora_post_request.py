@@ -1,4 +1,4 @@
-import requests, urllib, ast, re, #json
+import requests, urllib, ast, re #json
 from bs4 import BeautifulSoup
 from datetime import datetime as dt
 import numpy as np
@@ -76,7 +76,7 @@ def process_request_results(obs_list):
   #so we end up with a np array of elements that look like [lon, lat, datetime]
   return plant_name, extracted_data
 
-def to_sql(key_number):
+def to_dict(key_number):
   data = compose_request(key_number)
   plant_name, extracted = process_request_results(data)
 

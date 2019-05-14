@@ -1,3 +1,5 @@
 secrets.txt
 *.pyc
 elevation/*
+plants/*
+*~

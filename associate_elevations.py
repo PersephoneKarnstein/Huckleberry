@@ -8,8 +8,8 @@
 #we want to take a lat/lon from our observation and associate an elevation with it.
 
 from CalFlora_post_request import *
-
 import numpy as np
+import time
 
 def build_elev_filename(obs_lat, obs_lon):
     """This is technically unnecessary since all the 1-degree blocks of elevations we're
@@ -24,12 +24,14 @@ def build_elev_filename(obs_lat, obs_lon):
 
     elev_filename += str(int(abs(np.ceil(obs_lon)-1))) + ".txt"
 
-    print(elev_filename)
+    # print(elev_filename)
     return elev_filename
 
 
 def associate_elevation(obs_dict):
-    print(obs_dict)
+    start = time.time()
+
+    # print(obs_dict)
     lat, lon = obs_dict["lat"], obs_dict["lon"]
     lat_precision, lon_precision = (len(repr(a).split('.')[-1]) for a in [lat, lon])
 
@@ -53,7 +55,9 @@ def associate_elevation(obs_dict):
         avg_elev = np.average(elev_measurements, weights=elev_weights)
         weighted_std_elev = np.sqrt(np.average((elev_measurements-avg_elev)**2, weights=elev_weights))
 
-        print(f"n={len(elev_measurements)}; mean={avg_elev}; sigma={weighted_std_elev}")
+        end = time.time()
+
+        print(f"n={len(elev_measurements)}; mean={avg_elev}; sigma={weighted_std_elev}\nTime Elapsed: {end-start} seconds\n\n")
 
 
 
@@ -62,7 +66,6 @@ def associate_elevation(obs_dict):
 key_number = 1
 data = compose_request(key_number)
 plant_name, extracted = process_request_results(data)
-obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":float(extracted[3][1]), "lon":float(extracted[3][0]), "elev":None, "obs_date":extracted[3][2]}
-
-
-associate_elevation(obs_dict)
+for i in np.arange(7)+2:
+    obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":float(extracted[i][1]), "lon":float(extracted[i][0]), "elev":None, "obs_date":extracted[i][2]}
+    associate_elevation(obs_dict)

@@ -65,12 +65,12 @@ def process_request_results(obs_list):
   #n metadata correspond to the *first* n observations.
   datetimes = np.asarray(datetimes).reshape((len(datetimes),1))
   
-  print(extracted_data,"\n=====================\n",datetimes,
-    "\n=====================\n",np.shape(extracted_data), 
-    np.shape(datetimes), 
-    "\n\n\n\n\n\n")
+  # print(extracted_data,"\n=====================\n",datetimes,
+  #   "\n=====================\n",np.shape(extracted_data), 
+  #   np.shape(datetimes), 
+  #   "\n\n\n\n\n\n")
 
-  print(f"{undated_obs} dates were unknown.")
+  # print(f"{undated_obs} dates were unknown.")
   # extracted_data = extracted_data[:len(datetimes)]
   extracted_data = np.concatenate( (extracted_data, datetimes), axis=1)
   #so we end up with a np array of elements that look like [lon, lat, datetime]
@@ -81,7 +81,7 @@ def to_dict(key_number):
   plant_name, extracted = process_request_results(data)
 
   for obs in extracted[1:]:
-    obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":obs[1], "lon":obs[0], "elev":None, "obs_date":obs[2]}
+    obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":float(obs[1]), "lon":float(obs[0]), "elev":None, "obs_date":obs[2]}
       
 
 

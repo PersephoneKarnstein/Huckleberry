@@ -2,5 +2,6 @@ secrets.txt
 *.pyc
 elevation/*
 plants/*
-*~
+.*~
 .DS_Store
+*driver.log

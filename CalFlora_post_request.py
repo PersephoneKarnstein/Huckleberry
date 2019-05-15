@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime as dt
 import numpy as np
 
-from model import *
+# from model import *
 
 
 HEADERS = {'Host': 'www.calflora.org',
@@ -77,12 +77,15 @@ def process_request_results(obs_list):
   return plant_name, extracted_data
 
 def to_dict(key_number):
+  observations = []
   data = compose_request(key_number)
   plant_name, extracted = process_request_results(data)
 
   for obs in extracted[1:]:
     obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":float(obs[1]), "lon":float(obs[0]), "elev":None, "obs_date":obs[2]}
-      
+    observations.append(obs_dict)
+
+  return observations
 
 
 

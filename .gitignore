@@ -5,3 +5,5 @@ plants/*
 .*~
 .DS_Store
 *driver.log
+geckodriver*
+/env

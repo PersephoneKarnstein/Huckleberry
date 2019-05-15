@@ -14,14 +14,14 @@ class Observation(db.Model):
     __tablename__ = "observations"
 
     obs_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    plant_id = db.Column(db.Integer, db.ForeignKey('plants.plant_id'))
+    plant_id = db.Column(db.Integer)#, db.ForeignKey('plants.plant_id'))
     plant_name = db.Column(db.String(150), nullable=False)
     lat = db.Column(db.Float, nullable=False) 
     lon = db.Column(db.Float, nullable=False)
     elev = db.Column(db.Float, nullable=True)
     obs_date = db.Column(db.DateTime, nullable=True)
 
-    plant = db.relationship("Plant", backref="observations")
+    # plant = db.relationship("Plant", backref="observations")
 
 
     def __repr__(self):
@@ -56,7 +56,7 @@ def connect_to_db(app):
     """Connect the database to our Flask app."""
 
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres:///plants'
-    app.config['SQLALCHEMY_ECHO'] = True
+    app.config['SQLALCHEMY_ECHO'] = False
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.app = app
     db.init_app(app)

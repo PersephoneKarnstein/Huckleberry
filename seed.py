@@ -10,7 +10,7 @@ import CalFlora_post_request
 def get_observations(key_num):
     """Load observations from CalFlora and National Map into database."""
 
-    observations = CalFlora_post_request.to_dict(key_num)
+    observations = CalFlora_post_request.to_dict(scientific_name)
     obs_this_plant = len(observations)
     for j, observation in enumerate(observations):
         elevation = get_elevation(observation["lat"], observation["lon"])

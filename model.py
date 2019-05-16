@@ -34,6 +34,17 @@ class Plant(db.Model):
     __tablename__ = "plants"
 
     plant_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    sci_name = #str
+    common_names = #list
+    toxicity_bool = #bool
+    toxicity_notes = #str #toxicity fata only shows up on the taxon report, and only if it *is* toxic 
+    other_names = #list
+    calphotos_url = #str
+    native = #boolean
+    bloom_period
+    #if TOLERANCES
+
+    #if ASSOCIATED ORGANISMS
 
     def __repr__(self):
         return f"<>"

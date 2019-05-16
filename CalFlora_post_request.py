@@ -5,36 +5,31 @@ import numpy as np
 
 # from model import *
 
-
-HEADERS = {'Host': 'www.calflora.org',
- 'Connection': 'keep-alive',
-  'X-GWT-Module-Base': 'https',
-   'X-GWT-Permutation': '796E3160B66F09A3EADB3F82FCFB6C20',
-    'Origin': 'https',
-     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
-      'Content-Type': 'text/x-gwt-rpc; charset=UTF-8',
-       'Accept': '*/*',
-        'Referer': 'https',
-         'Accept-Encoding': 'gzip, deflate, br',
-          'Accept-Language': 'en-US,en;q=0.9'}
-
-payload = lambda scientific_name: f"7|0|25|https://www.calflora.org/entry/com.gmap3.DGrid2A/|835B15F29DDC753A8E097286A8997BBE|\
-com.cfapp.client.wentry.WeedDataService|readPdas|java.util.HashMap/1797211028|I|[D/2047612875|java.lang.String/2004016611|taxon|\
-{scientific_name}|georeferenced|t|addnloc|cch|wint|r|aor|DGR|hfil|R|griddiv|100|cell|xun|0|1|2|3|4|3|5|6|7|5|10|8|9|8|10|8|11|8|\
-12|8|13|-5|8|14|-5|8|15|8|16|8|17|8|18|8|19|8|20|8|21|8|22|8|23|-5|8|24|8|25|2500|7|4|\
--125.000000000000|42.50000000000000|-114.000000000000|32.500000000000000|"
-
 url = lambda key_number : f"https://www.calflora.org/cgi-bin/species_query.cgi?where-calrecnum={key_number}"
 
+#soup.select("body > table:nth-child(4)")[0].b.get_text()
+def compose_obs_request(scientific_name):
+  HEADERS = {'Host': 'www.calflora.org',
+    'Connection': 'keep-alive',
+    'X-GWT-Module-Base': 'https',
+     'X-GWT-Permutation': '796E3160B66F09A3EADB3F82FCFB6C20',
+      'Origin': 'https',
+       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
+        'Content-Type': 'text/x-gwt-rpc; charset=UTF-8',
+         'Accept': '*/*',
+          'Referer': 'https',
+           'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9'}
 
-def compose_request(key_number):
-    page = requests.get(url(key_number))
-    soup = BeautifulSoup(page.content, features="lxml")
-    scientific_name = (soup.select_one("#c-about > span").get_text()).strip()
+  payload = lambda scientific_name: f"7|0|25|https://www.calflora.org/entry/com.gmap3.DGrid2A/|835B15F29DDC753A8E097286A8997BBE|\
+  com.cfapp.client.wentry.WeedDataService|readPdas|java.util.HashMap/1797211028|I|[D/2047612875|java.lang.String/2004016611|taxon|\
+  {scientific_name}|georeferenced|t|addnloc|cch|wint|r|aor|DGR|hfil|R|griddiv|100|cell|xun|0|1|2|3|4|3|5|6|7|5|10|8|9|8|10|8|11|8|\
+  12|8|13|-5|8|14|-5|8|15|8|16|8|17|8|18|8|19|8|20|8|21|8|22|8|23|-5|8|24|8|25|2500|7|4|\
+  -125.000000000000|42.50000000000000|-114.000000000000|32.500000000000000|"
 
-    r = requests.post('https://www.calflora.org/app/weeddata', headers=HEADERS, data=payload(scientific_name))
-    # data = r
-    return ast.literal_eval(r.text[4:]) #weirdly calflora doesn't return things as json, so we need to convert the string into a list
+  r = requests.post('https://www.calflora.org/app/weeddata', headers=HEADERS, data=payload(scientific_name))
+  # data = r
+  return ast.literal_eval(r.text[4:]) #weirdly calflora doesn't return things as json, so we need to convert the string into a list
 
 
 def process_request_results(obs_list):
@@ -76,9 +71,9 @@ def process_request_results(obs_list):
   #so we end up with a np array of elements that look like [lon, lat, datetime]
   return plant_name, extracted_data
 
-def to_dict(key_number):
+def obs_to_dict(scientific_name):
   observations = []
-  data = compose_request(key_number)
+  data = compose_obs_request(scientific_name)
   plant_name, extracted = process_request_results(data)
 
   for obs in extracted[1:]:
@@ -87,8 +82,26 @@ def to_dict(key_number):
 
   return observations
 
+# def get_plant_data(key_number)
+#   page = requests.get(url(key_number))
+#   soup = BeautifulSoup(page.content, features="lxml")
 
+#   try:
+#     no_record_text = soup.select("body > table:nth-child(4)")[0].b.get_text() #this will return "Sorry, no matching record found." when we have reached the last record
+#     if no_record_text == "Sorry, no matching record found.":
+#       raise Exception("\n\n\n\nReached last CalFlora record.")
+#     else: raise Exception("Unknown Error: page does not match known formats.")
+#   except IndexError: #if it *doesn't* find that text in that position (i.e., if the record exists), it will raise an index error and come here.
+#     try:
+#       scientific_name = (soup.select_one("#c-about > span").get_text()).strip()
+#     except AttributeError:
+#       raise Exception("Unknown Error: Scientific name not found.")
+#       #I haven't actually seen it not be able to find a scientific name here, but it's possible.
 
+#   #ok so if we get to this point without raising an error, it means that you are on a page that (a) is a valid plant record and (b) has a species name.
+
+#   # return scientific_name
+    
 
 
 

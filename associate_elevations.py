@@ -63,9 +63,9 @@ def associate_elevation(obs_dict):
 
 
 
-key_number = 1
-data = compose_request(key_number)
-plant_name, extracted = process_request_results(data)
-for i in np.arange(7)+2:
-    obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":float(extracted[i][1]), "lon":float(extracted[i][0]), "elev":None, "obs_date":extracted[i][2]}
-    associate_elevation(obs_dict)
+# scientific_name = 'Calochortus panamintensis'
+# data = compose_obs_request(scientific_name)
+# plant_name, extracted = process_request_results(data)
+# for i in np.arange(7)+2:
+#     obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":float(extracted[i][1]), "lon":float(extracted[i][0]), "elev":None, "obs_date":extracted[i][2]}
+#     associate_elevation(obs_dict)

@@ -1,4 +1,4 @@
-secrets.txt
+secrets*
 *.pyc
 elevation/*
 plants/*

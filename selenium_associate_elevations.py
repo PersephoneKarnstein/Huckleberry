@@ -5,124 +5,135 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-import time
+import time, json, googlemaps
+
+from secrets import google_api_key
 
 # import CalFlora_post_request
 
-driver = webdriver.Firefox()
-actions = ActionChains(driver)
-wait = WebDriverWait(driver, 40)
+def selenium_setup():
+    global driver, actions, wait, iframe
+
+    driver = webdriver.Firefox()
+    actions = ActionChains(driver)
+    wait = WebDriverWait(driver, 40)
 
 
-url = "https://viewer.nationalmap.gov/advanced-viewer/"
+    url = "https://viewer.nationalmap.gov/advanced-viewer/"
 
-driver.get(url)
+    driver.get(url)
 
-driver.maximize_window()
+    driver.maximize_window()
 
 
-iframe = driver.find_element_by_xpath('/html/body/div[2]/iframe')
-driver.switch_to.frame(iframe)
+    iframe = driver.find_element_by_xpath('/html/body/div[2]/iframe')
+    driver.switch_to.frame(iframe)
 
-# time.sleep(10)
 
-def get_elevation(lat, lon):
+def get_elevation(lat, lon, googleAPI=True, driver=None):
     start = time.time()
 
     lon_lat = f"{lon}, {lat}"
     # print(1)
     # input("Press enter.")
     #wait until the search bar is visible and then search for the latitude and longitude in question
-    await_search = wait.until(ec.visibility_of_element_located((By.ID, "esri_dijit_Search_0_input")))
-    ActionChains(driver).move_to_element(await_search).perform()
+    if googleAPI:
+        google_elev = googlemaps.Client(key=google_api_key).elevation((lat, lon))[0]
+        elev = google_elev["elevation"]
+        got_lat = google_elev["location"]["lat"]
+        got_lon = google_elev["location"]["lng"]
 
-    # print(2)
-    # input("Press enter.")
-    driver.find_element_by_id("esri_dijit_Search_0_input").send_keys(lon_lat)
-    # print(3)
-    # input("Press enter.")
-    while True:
-        try:
-            driver.find_element_by_class_name('searchSubmit').click()
-            # Sometimes it doesn't seem to capture the submit click on the first try. If it doesn't
-            # -- which Selenium will know because it doesn't place a dot on the map -- try clicking agian.
-            # print(4)
-            # input("Press enter.")
-            await_dot = wait.until(ec.visibility_of_element_located((By.ID, "map_graphics_layer")))
-            ActionChains(driver).move_to_element(await_dot).perform()
-            break
-        except TimeoutException:
-            continue
-    # print(5)
-    # input("Press enter.")
+    if not googleAPI:
+        await_search = wait.until(ec.visibility_of_element_located((By.ID, "esri_dijit_Search_0_input")))
+        ActionChains(driver).move_to_element(await_search).perform()
 
-    #figure out where the dot it just put on the map is.
-    targeting_circle = driver.find_element_by_id("map_graphics_layer")
-    location = targeting_circle.location
+        # print(2)
+        # input("Press enter.")
+        driver.find_element_by_id("esri_dijit_Search_0_input").send_keys(lon_lat)
+        # print(3)
+        # input("Press enter.")
+        while True:
+            try:
+                driver.find_element_by_class_name('searchSubmit').click()
+                # Sometimes it doesn't seem to capture the submit click on the first try. If it doesn't
+                # -- which Selenium will know because it doesn't place a dot on the map -- try clicking agian.
+                # print(4)
+                # input("Press enter.")
+                await_dot = wait.until(ec.visibility_of_element_located((By.ID, "map_graphics_layer")))
+                ActionChains(driver).move_to_element(await_dot).perform()
+                break
+            except TimeoutException:
+                continue
+        # print(5)
+        # input("Press enter.")
 
-    # print(6)
-    # input("Press enter.")
-    #find the "Spot Elevation" button on the top bar and click on it
-    top_buttons = driver.find_element_by_class_name("container-section")
-    top_buttons.find_element_by_xpath(".//div[5]").click()
+        #figure out where the dot it just put on the map is.
+        targeting_circle = driver.find_element_by_id("map_graphics_layer")
+        location = targeting_circle.location
 
-    # print(7)
-    # input("Press enter.")
-    #wait until the "Activate" button for Spot Elev shows up, and click on it.
-    while True:
-        try:
-            await_activate = wait.until(ec.visibility_of_element_located((By.ID, "activateButton")))
-            ActionChains(driver).move_to_element(await_activate).click().perform()
-            break
-        except TimeoutException:
-            top_buttons.find_element_by_xpath(".//div[5]").click()
-            continue
+        # print(6)
+        # input("Press enter.")
+        #find the "Spot Elevation" button on the top bar and click on it
+        top_buttons = driver.find_element_by_class_name("container-section")
+        top_buttons.find_element_by_xpath(".//div[5]").click()
 
-    # print(8)
-    # input("Press enter.")
+        # print(7)
+        # input("Press enter.")
+        #wait until the "Activate" button for Spot Elev shows up, and click on it.
+        while True:
+            try:
+                await_activate = wait.until(ec.visibility_of_element_located((By.ID, "activateButton")))
+                ActionChains(driver).move_to_element(await_activate).click().perform()
+                break
+            except TimeoutException:
+                top_buttons.find_element_by_xpath(".//div[5]").click()
+                continue
 
-    heard_click = False
+        # print(8)
+        # input("Press enter.")
 
-    while not heard_click:
-        # **should** just click on the same point as we had previously, but seems to be moving the map again? 
-        actions.move_to_element_with_offset(driver.find_element_by_tag_name('body'), location['x'],location['y']).click().perform()
-        try :
-            # print(9)
-            # input("Press enter.")
-            await_elev_popup = WebDriverWait(driver, 2).until(ec.visibility_of_element_located((By.CLASS_NAME, 'esriPopupWrapper')))
-            ActionChains(driver).move_to_element(await_elev_popup).perform()
-            heard_click = True
-            # print(10)
-            # input("Press enter.")
-            while True:
-                try:
-                    # print(11)
-                    # input("Press enter.")
-                    elev_popup = driver.find_element_by_class_name('esriPopupWrapper')
-                    elev = elev_popup.find_element_by_xpath(".//div[2]/div").text
-                    break
-                except NoSuchElementException:
-                    time.sleep(1)
+        heard_click = False
 
-            break
-        except TimeoutException:
-            continue
+        while not heard_click:
+            # **should** just click on the same point as we had previously, but seems to be moving the map again? 
+            actions.move_to_element_with_offset(driver.find_element_by_tag_name('body'), location['x'],location['y']).click().perform()
+            try :
+                # print(9)
+                # input("Press enter.")
+                await_elev_popup = WebDriverWait(driver, 2).until(ec.visibility_of_element_located((By.CLASS_NAME, 'esriPopupWrapper')))
+                ActionChains(driver).move_to_element(await_elev_popup).perform()
+                heard_click = True
+                # print(10)
+                # input("Press enter.")
+                while True:
+                    try:
+                        # print(11)
+                        # input("Press enter.")
+                        elev_popup = driver.find_element_by_class_name('esriPopupWrapper')
+                        elev = elev_popup.find_element_by_xpath(".//div[2]/div").text
+                        break
+                    except NoSuchElementException:
+                        time.sleep(1)
 
-    got_lat, got_lon = elev.split()[9:11]
-    elev = float(elev.split()[1])
-    #elev is in feet
+                break
+            except TimeoutException:
+                continue
 
-    driver.find_element_by_id("activateButton").click()
-    # driver.find_element_by_xpath("/html/body/div[2]/div/div[3]/div[1]/div[2]").click()
-    elev_panel = driver.find_element_by_id("widgets_SpotElevation_Widget_20_panel")
-    elev_panel.find_element_by_xpath(".//div[1]/div[2]").click()
+        got_lat, got_lon = elev.split()[9:11]
+        elev = float(elev.split()[1])
+        #elev is in feet
 
-    # //*[@id="widgets_SpotElevation_Widget_20_panel"]
-    # /html/body/div[2]/div/div[3]/div[1]/div[2]
-    # /html/body/div[2]/div/div[1]/div[10]
-    # /html/body/div[2]/div/div[1]/div[10]/div[1]/div[2]
+        driver.find_element_by_id("activateButton").click()
+        # driver.find_element_by_xpath("/html/body/div[2]/div/div[3]/div[1]/div[2]").click()
+        elev_panel = driver.find_element_by_id("widgets_SpotElevation_Widget_20_panel")
+        elev_panel.find_element_by_xpath(".//div[1]/div[2]").click()
 
-    driver.find_element_by_id("esri_dijit_Search_0_input").clear()
+        # //*[@id="widgets_SpotElevation_Widget_20_panel"]
+        # /html/body/div[2]/div/div[3]/div[1]/div[2]
+        # /html/body/div[2]/div/div[1]/div[10]
+        # /html/body/div[2]/div/div[1]/div[10]/div[1]/div[2]
+
+        driver.find_element_by_id("esri_dijit_Search_0_input").clear()
 
     end = time.time()
 
@@ -130,8 +141,6 @@ def get_elevation(lat, lon):
         print(f"Elevation: {elev} ft.\nLooking for {lat}, {lon};\nFound {got_lat}, {got_lon}\nTime Elapsed: {end-start} seconds\n\n")
    
     return elev
-
-
 
 
 

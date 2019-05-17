@@ -33,14 +33,23 @@ class Plant(db.Model):
 
     __tablename__ = "plants"
 
+    #BASICS
     plant_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     sci_name = #str
     toxicity_bool = #bool
     toxicity_notes = #str #toxicity fata only shows up on the taxon report, and only if it *is* toxic 
-    calphotos_url = #str
     native = #boolean
     bloom_period = #?? datetime tuple???
-    verbose_desc = #str. from Jepson eFlora link or calscape
+    verbose_desc = #str. from calscape
+    technical_desc = #str. from Jepson eFlora
+
+    #URLs
+    calphotos_url = #str
+    characteristics_url = #str
+    jepson_url = #str
+    calscape_url = #str
+    usda_plants_url = #str
+
     #if TOLERANCES
 
     #if ASSOCIATED ORGANISMS

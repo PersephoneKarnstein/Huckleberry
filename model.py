@@ -35,13 +35,12 @@ class Plant(db.Model):
 
     plant_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     sci_name = #str
-    common_names = #list
     toxicity_bool = #bool
     toxicity_notes = #str #toxicity fata only shows up on the taxon report, and only if it *is* toxic 
-    other_names = #list
     calphotos_url = #str
     native = #boolean
-    bloom_period
+    bloom_period = #?? datetime tuple???
+    verbose_desc = #str. from Jepson eFlora link or calscape
     #if TOLERANCES
 
     #if ASSOCIATED ORGANISMS
@@ -50,7 +49,16 @@ class Plant(db.Model):
         return f"<>"
         
 
+class AltNames(db.Model):
+    """docstring for AltNames"""
 
+    __tablename__ = "alternate names"
+
+    record_num = #int, primary key
+    plant_id = #int, foreign key
+    other_name = #str. includes both deprecated scientific names and common names
+
+        
 ##############################################################################
 # Helper functions
 

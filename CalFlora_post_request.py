@@ -5,8 +5,6 @@ import numpy as np
 
 # from model import *
 
-url = lambda key_number : f"https://www.calflora.org/cgi-bin/species_query.cgi?where-calrecnum={key_number}"
-
 #soup.select("body > table:nth-child(4)")[0].b.get_text()
 def compose_obs_request(scientific_name):
   HEADERS = {'Host': 'www.calflora.org',

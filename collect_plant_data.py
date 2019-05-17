@@ -1,4 +1,4 @@
-import requests, urllib, ast, re #json
+import requests, urllib, ast, re, warnings #json
 import numpy as np
 
 from bs4 import BeautifulSoup
@@ -10,12 +10,13 @@ url = lambda key_number : f"https://www.calflora.org/cgi-bin/species_query.cgi?w
 
 
 def test_taxon_page_goodness(soup_of_page):
+  """Makes sure a page is a viable taxon report before scraping it"""
   try:
     no_record_text = soup_of_page.select("body > table:nth-child(4)")[0].b.get_text() #this will return "Sorry, no matching record found." when we have reached the last record
     
     if no_record_text == "Sorry, no matching record found.":
       page_good = False
-      scientific_name_or_error_notes = "\n\n\n\nReached last CalFlora record."
+      scientific_name_or_error_notes = "Reached last CalFlora record."
     else:
       page_good = False
       scientific_name_or_error_notes ="Unknown Error: page does not match known formats."
@@ -31,20 +32,36 @@ def test_taxon_page_goodness(soup_of_page):
       #I haven't actually seen it not be able to find a scientific name here, but it's possible.
 
   #ok so if we get to this point without raising an error, it means that you are on a page that (a) is a valid plant record and (b) has a species name.
+  #however, if the scientific name is no longer active, we would still get this far so we still need to check for that.
+
+  try:
+    name_inactive = soup_of_page.select_one("#c-name").i.get_text()
+    scientific_name_or_error_notes = "Name is no longer in active use"
+    page_good = False
+  except AttributeError:
+    pass
+
+
   return page_good, scientific_name_or_error_notes
 
+
+
 def unicode_cleaner(css_selector, soup):
+  """A tiny function to remove non-breaking spaces and other annoying things found in web text"""
   gotten_text = soup.select_one(css_selector).get_text(strip=True)
   return uni_normal("NFKD", gotten_text)
 
+
+
 def get_plant_taxon_report(key_number):
+  """Pulls as much data as possible from the 'taxon report' page of a plant's CalFlora record"""
   page = requests.get(url(key_number))
   soup = BeautifulSoup(page.content, features="lxml")
 
   goodness = test_taxon_page_goodness(soup)
 
   if not goodness[0]:
-    raise Exception(goodness[1]) #if test_taxon_page_goodness returns False, the second
+    warnings.warn(goodness[1]) #if test_taxon_page_goodness returns False, the second
     #part of the response will be an error message; if it returns True, the second part
     #of the response will be the scientific name
   else: pass
@@ -53,7 +70,8 @@ def get_plant_taxon_report(key_number):
     "sci_name":goodness[1],
     "toxicity_bool": False,
     "toxicity_notes": "",   
-    "native":False,          #
+    "native":False, 
+    "rare":False,         #
     "bloom_period":None,     # 
     "verbose_desc": "",      #
     "technical_desc": "",    #
@@ -61,7 +79,8 @@ def get_plant_taxon_report(key_number):
     "characteristics_url": f"https://www.calflora.org/entry/plantchar.html?crn={key_number}", 
     "jepson_url": None, 
     "calscape_url":None, 
-    "usda_plants_url": None,}
+    "usda_plants_url": None,
+    "cnps_rare_url": None}
 
 
   ################
@@ -106,25 +125,38 @@ def get_plant_taxon_report(key_number):
   for url_name in ["jepson_url", "calscape_url", "usda_plants_url"]:
     if url_name: plant_data[url_name] = locals()[url_name]
 
+  ################
+  #### RARITY ####
+  ################
+  try:
+    rarity_tag = soup.select_one("#c-namestatus").select_one(".A10").find_all('a', string="CNPS")[0]
+    plant_data["rare"] = True
+    plant_data["cnps_rare_url"] = rarity_tag.attrs["href"]
+  except IndexError:pass
+  
+
+  return plant_data, common_names
 
 
-  return plant_data
 
 def get_plant_data_characteristics(plant_data):
-  # plant_data should be inherited from get_plant_taxon_report() and look like this:
-  # 
-  # plant_data = {'plant_id': 199,
-  # 'sci_name': 'Allium howellii',
-  # 'toxicity_bool': True,
-  # 'toxicity_notes': 'MINOR',
-  # 'native': False,
-  # 'bloom_period': None,
-  # 'verbose_desc': '',
-  # 'technical_desc': '',
-  # 'calphotos_url': None,
-  # 'characteristics_url': 'https://www.calflora.org/entry/plantchar.html?crn=199',
-  # 'jepson_url': 'HTTP://ucjeps.berkeley.edu/eflora/eflora_display.php?tid=12587',
-  # 'calscape_url': 'HTTP://calscape.org/Allium-howellii-()',
-  # 'usda_plants_url': 'https://plants.usda.gov/java/nameSearch?mode=symbol&keywordquery=ALHO2'}
+  """Pulls as much data as possible from the 'plant characteristics' page of a plant's CalFlora record
 
-  
+    plant_data should be inherited from get_plant_taxon_report() and look like this:
+    plant_data = {'plant_id': 199,
+      'sci_name': 'Allium howellii',
+      'toxicity_bool': True,
+      'toxicity_notes': 'MINOR',
+      'native': False,
+      "rare":False, 
+      'bloom_period': None,
+      'verbose_desc': '',
+      'technical_desc': '',
+      'calphotos_url': None,
+      'characteristics_url': 'https://www.calflora.org/entry/plantchar.html?crn=199',
+      'jepson_url': 'HTTP://ucjeps.berkeley.edu/eflora/eflora_display.php?tid=12587',
+      'calscape_url': 'HTTP://calscape.org/Allium-howellii-()',
+      'usda_plants_url': 'https://plants.usda.gov/java/nameSearch?mode=symbol&keywordquery=ALHO2',
+      "cnps_rare_url": None}
+  """
+  pass

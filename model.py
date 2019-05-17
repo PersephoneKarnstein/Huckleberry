@@ -14,14 +14,14 @@ class Observation(db.Model):
     __tablename__ = "observations"
 
     obs_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    plant_id = db.Column(db.Integer)#, db.ForeignKey('plants.plant_id'))
+    plant_id = db.Column(db.Integer, db.ForeignKey('plants.plant_id'))
     plant_name = db.Column(db.String(150), nullable=False)
     lat = db.Column(db.Float, nullable=False) 
     lon = db.Column(db.Float, nullable=False)
     elev = db.Column(db.Float, nullable=True)
     obs_date = db.Column(db.DateTime, nullable=True)
 
-    # plant = db.relationship("Plant", backref="observations")
+    plant = db.relationship("Plant", backref="observations")
 
 
     def __repr__(self):
@@ -33,39 +33,41 @@ class Plant(db.Model):
 
     __tablename__ = "plants"
 
-    #BASICS
+    #BASICS#
     plant_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    sci_name = #str
-    toxicity_bool = #bool
-    toxicity_notes = #str #toxicity fata only shows up on the taxon report, and only if it *is* toxic 
-    native = #boolean
-    bloom_period = #?? datetime tuple???
-    verbose_desc = #str. from calscape
-    technical_desc = #str. from Jepson eFlora
+    sci_name = db.Column(db.String(150) nullable=False)#str
+    toxicity_bool = db.Column(db.Boolean, nullable=False )#bool
+    toxicity_notes = db.Column(db.String(150), nullable=True )#str #toxicity fata only shows up on the taxon report, and only if it *is* toxic 
+    rare = db.Column(db.Boolean, nullable=False )#bool
+    native = db.Column(db.Boolean, nullable=False )#boolean
+    # bloom_period = db.Column(db.Array() )#?? datetime tuple???
+    verbose_desc = db.Column(db.String(600), nullable=True)#str. from calscape
+    technical_desc = db.Column(db.String(600), nullable=True )#str. from Jepson eFlora
 
-    #URLs
-    calphotos_url = #str
-    characteristics_url = #str
-    jepson_url = #str
-    calscape_url = #str
-    usda_plants_url = #str
+    #URLs#
+    calphotos_url = db.Column(db.String(150), nullable=True )#str
+    characteristics_url = db.Column(db.String(150), nullable=False )#str
+    jepson_url = db.Column(db.String(150), nullable=True )#str
+    calscape_url = db.Column(db.String(150), nullable=False )#str
+    usda_plants_url = db.Column(db.String(150), nullable=True )#str
+    cnps_rare_url = db.Column(db.String(150), nullable=True )#str
 
-    #if TOLERANCES
+    #if TOLERANCES#
 
-    #if ASSOCIATED ORGANISMS
+    #if ASSOCIATED ORGANISMS#
 
     def __repr__(self):
-        return f"<>"
+        return f"<{"Native" if self.native else "Non-native"} plant with ID {self.plant_id} ({self.sci_name})>"
         
 
-class AltNames(db.Model):
-    """docstring for AltNames"""
+# class AltNames(db.Model):
+#     """docstring for AltNames"""
 
-    __tablename__ = "alternate names"
+#     __tablename__ = "alternate names"
 
-    record_num = #int, primary key
-    plant_id = #int, foreign key
-    other_name = #str. includes both deprecated scientific names and common names
+#     record_num = #int, primary key
+#     plant_id = #int, foreign key
+#     other_name = #str. includes both deprecated scientific names and common names
 
         
 ##############################################################################

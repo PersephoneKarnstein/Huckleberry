@@ -4,10 +4,11 @@ from sqlalchemy import func
 from model import Observation, connect_to_db, db, init_app
 from server import app
 from selenium_associate_elevations import get_elevation
+
 import CalFlora_post_request
+from collect_plant_data import get_plant_taxon_report
 
-
-def get_observations(key_num):
+def get_observations(scientific_name):
     """Load observations from CalFlora and National Map into database."""
 
     observations = CalFlora_post_request.obs_to_dict(scientific_name)
@@ -37,9 +38,37 @@ def get_observations(key_num):
         # Once we're done, we should commit our work
         db.session.commit()
 
+
+
+def get_plant_data(key_number):
+    plant_data = get_plant_taxon_report(key_number)
+
+    plant = Plant(plant_id=plant_data["plant_id"],
+        sci_name=plant_data["sci_name"],
+        toxicity_bool=plant_data["toxicity_bool"],
+        toxicity_notes=plant_data["toxicity_notes"],
+        rare=plant_data["rare"],
+        native=plant_data["native"],
+        verbose_desc=plant_data["verbose_desc"],
+        technical_desc=plant_data["technical_desc"],
+        calphotos_url=plant_data["calphotos_url"],
+        characteristics_url=plant_data["characteristics_url"],
+        jepson_url=plant_data["jepson_url"],
+        calscape_url=plant_data["calscape_url"],
+        usda_plants_url=plant_data["usda_plants_url"],
+        cnps_rare_url=plant_data["cnps_rare_url"])
+
+    print(plant.__repr__)
+    db.session.add(obs)
+    db.session.commit()
+
+    get_observations(plant_data["plant_id"])
+
+
+
 if __name__ == "__main__":
     connect_to_db(app)
     db.create_all()
 
     for i in range(1,10):
-        get_observations(i)
+        get_plant_data(i)

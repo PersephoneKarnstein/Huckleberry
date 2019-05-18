@@ -35,7 +35,7 @@ class Plant(db.Model):
 
     #BASICS#
     plant_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    sci_name = db.Column(db.String(150) nullable=False)#str
+    sci_name = db.Column(db.String(150), nullable=False)#str
     toxicity_bool = db.Column(db.Boolean, nullable=False )#bool
     toxicity_notes = db.Column(db.String(150), nullable=True )#str #toxicity fata only shows up on the taxon report, and only if it *is* toxic 
     rare = db.Column(db.Boolean, nullable=False )#bool
@@ -57,7 +57,8 @@ class Plant(db.Model):
     #if ASSOCIATED ORGANISMS#
 
     def __repr__(self):
-        return f"<{"Native" if self.native else "Non-native"} plant with ID {self.plant_id} ({self.sci_name})>"
+        nativeness = "Native" if self.native else "Non-native"
+        return f"<{nativeness} plant with ID {self.plant_id} ({self.sci_name})>"
         
 
 # class AltNames(db.Model):

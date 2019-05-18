@@ -6,26 +6,34 @@ import numpy as np
 # from model import *
 
 #soup.select("body > table:nth-child(4)")[0].b.get_text()
-def compose_obs_request(scientific_name):
-  HEADERS = {'Host': 'www.calflora.org',
-    'Connection': 'keep-alive',
-    'X-GWT-Module-Base': 'https',
-     'X-GWT-Permutation': '796E3160B66F09A3EADB3F82FCFB6C20',
-      'Origin': 'https',
-       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
-        'Content-Type': 'text/x-gwt-rpc; charset=UTF-8',
-         'Accept': '*/*',
-          'Referer': 'https',
-           'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-US,en;q=0.9'}
 
-  payload = lambda scientific_name: f"7|0|25|https://www.calflora.org/entry/com.gmap3.DGrid2A/|835B15F29DDC753A8E097286A8997BBE|\
-  com.cfapp.client.wentry.WeedDataService|readPdas|java.util.HashMap/1797211028|I|[D/2047612875|java.lang.String/2004016611|taxon|\
-  {scientific_name}|georeferenced|t|addnloc|cch|wint|r|aor|DGR|hfil|R|griddiv|100|cell|xun|0|1|2|3|4|3|5|6|7|5|10|8|9|8|10|8|11|8|\
-  12|8|13|-5|8|14|-5|8|15|8|16|8|17|8|18|8|19|8|20|8|21|8|22|8|23|-5|8|24|8|25|2500|7|4|\
-  -125.000000000000|42.50000000000000|-114.000000000000|32.500000000000000|"
+# def un_bork_headers():
+#   import selenium
+
+
+
+
+
+
+
+def compose_obs_request(scientific_name):
+  print(scientific_name)
+  HEADERS = {"Host": "www.calflora.org",
+    "Connection": "keep-alive",
+      "Origin": "https://www.calflora.org",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36",
+          "Content-Type": "text/x-gwt-rpc; charset=UTF-8",
+            "X-GWT-Module-Base": "https://www.calflora.org/entry/com.gmap3.DGrid2A/",
+              "X-GWT-Permutation": "796E3160B66F09A3EADB3F82FCFB6C20",
+                "Accept": "*/*",
+                  "Accept-Encoding": "gzip, deflate, br",
+                    "Accept-Language": "en-US,en;q=0.9"}
+
+  payload = lambda scientific_name: f"7|0|25|https://www.calflora.org/entry/com.gmap3.DGrid2A/|835B15F29DDC753A8E097286A8997BBE|com.cfapp.client.wentry.WeedDataService|readPdas|java.util.HashMap/1797211028|I|[D/2047612875|java.lang.String/2004016611|taxon|{scientific_name}|georeferenced|t|addnloc|cch|wint|r|aor|DGR|hfil|R|griddiv|100|cell|xun|0|1|2|3|4|3|5|6|7|5|10|8|9|8|10|8|11|8|12|8|13|-5|8|14|-5|8|15|8|16|8|17|8|18|8|19|8|20|8|21|8|22|8|23|-5|8|24|8|25|2500|7|4|-125.000000000000|42.50000000000000|-114.000000000000|32.500000000000000|"
+
 
   r = requests.post('https://www.calflora.org/app/weeddata', headers=HEADERS, data=payload(scientific_name))
+  print(r.text)
   # data = r
   return ast.literal_eval(r.text[4:]) #weirdly calflora doesn't return things as json, so we need to convert the string into a list
 
@@ -69,7 +77,7 @@ def process_request_results(obs_list):
   #so we end up with a np array of elements that look like [lon, lat, datetime]
   return plant_name, extracted_data
 
-def obs_to_dict(scientific_name):
+def obs_to_dict(scientific_name, key_number):
   observations = []
   data = compose_obs_request(scientific_name)
   plant_name, extracted = process_request_results(data)

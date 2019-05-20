@@ -61,9 +61,13 @@ def get_plant_taxon_report(key_number):
   goodness = test_taxon_page_goodness(soup)
 
   if not goodness[0]:
-    warnings.warn(goodness[1]) #if test_taxon_page_goodness returns False, the second
+    if goodness[1] == "Reached last CalFlora record.":
+      raise Exception(goodness[1])
+    else:
+      warnings.warn(goodness[1]) #if test_taxon_page_goodness returns False, the second
     #part of the response will be an error message; if it returns True, the second part
     #of the response will be the scientific name
+
   else: pass
 
   plant_data = {"plant_id":key_number,
@@ -80,7 +84,8 @@ def get_plant_taxon_report(key_number):
     "jepson_url": None, 
     "calscape_url":None, 
     "usda_plants_url": None,
-    "cnps_rare_url": None}
+    "cnps_rare_url": None
+    }
 
 
   ################
@@ -139,7 +144,7 @@ def get_plant_taxon_report(key_number):
 
 
 
-def get_plant_data_characteristics(plant_data):
+def get_plant_data_calscape(plant_data):
   """Pulls as much data as possible from the 'plant characteristics' page of a plant's CalFlora record
 
     plant_data should be inherited from get_plant_taxon_report() and look like this:
@@ -159,4 +164,35 @@ def get_plant_data_characteristics(plant_data):
       'usda_plants_url': 'https://plants.usda.gov/java/nameSearch?mode=symbol&keywordquery=ALHO2',
       "cnps_rare_url": None}
   """
-  pass
+  if not plant_data["calscape_url"]:
+    return plant_data
+  else:
+    page = requests.get(plant_data["calscape_url"])
+    soup = BeautifulSoup(page.content, features="lxml")
+
+    if soup.select_one(".about"):
+      verbose_desc = soup.select_one(".about").get_text().split("\n")
+      verbose_desc = " ".join([i.strip() for i in list(filter(None, verbose_desc))[1:]])
+      plant_data['verbose_desc'] = (verbose_desc if len(verbose_desc)<1000 else verbose_desc[:1000]+"...")
+    else: pass 
+
+    if soup.find("legend", string="Plant Description"):
+      plant_desc = soup.find("legend", string="Plant Description")
+      for plant_attr in plant_desc.parent.find_all("div"):
+        if "Plant Type" in plant_attr.get_text():
+          plant_data["plant_type"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1]
+          #see if it says if it's like a shrub or a tree or what
+        else: pass
+
+        if "Max. Height" in plant_attr.get_text():
+          height_str = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1]
+          meters = re.search("( ft \(\d{0,4}\.{0,1}\d{0,2} - \d{0,4}\.{0,1}\d{0,2} m\))", height_str)
+          #look for the conversion to meters that Calscape does for each plant height and remove it. Because
+          #feet are smaller (and listed first so presumably what was measured?) it should be a more accurate measure.
+
+          possible_heights = [float(i) for i in height_str.replace(meters.group(1), "").split(" - ")]
+          if len(possible_heights)==2:
+            min_height, max_height = possible_heights
+          elif len(possible_heights) == 1:
+            max_height = possible_heights[0]
+

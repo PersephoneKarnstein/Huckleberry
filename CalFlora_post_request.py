@@ -17,7 +17,7 @@ import numpy as np
 
 
 def compose_obs_request(scientific_name):
-  print(scientific_name)
+  # print(scientific_name)
   HEADERS = {"Host": "www.calflora.org",
     "Connection": "keep-alive",
       "Origin": "https://www.calflora.org",
@@ -33,7 +33,7 @@ def compose_obs_request(scientific_name):
 
 
   r = requests.post('https://www.calflora.org/app/weeddata', headers=HEADERS, data=payload(scientific_name))
-  print(r.text)
+  # print(r.text)
   # data = r
   return ast.literal_eval(r.text[4:]) #weirdly calflora doesn't return things as json, so we need to convert the string into a list
 

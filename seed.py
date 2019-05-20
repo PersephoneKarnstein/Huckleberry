@@ -1,5 +1,6 @@
 # from datetime import datetime as dt
 from sqlalchemy import func
+from tqdm import tqdm, tqdm_gui
 
 from model import Observation, Plant, connect_to_db, db, init_app
 from server import app
@@ -13,6 +14,13 @@ def get_observations(scientific_name, plant_id):
 
     observations = CalFlora_post_request.obs_to_dict(scientific_name, plant_id)
     obs_this_plant = len(observations)
+
+    obs_read = tqdm(total=obs_this_plant, desc="Starting Up...", unit="obs", miniters=5)
+    # pbar.reset()
+    pbar_desc = (scientific_name[:30] + '..') if len(scientific_name) > 30 else scientific_name
+    obs_read.set_description('\x1b[6;30;42m' +pbar_desc+ '\x1b[0m')
+
+
     for j, observation in enumerate(observations):
         elevation = get_elevation(observation["lat"], observation["lon"])
         observation["elev"] = elevation
@@ -31,16 +39,17 @@ def get_observations(scientific_name, plant_id):
 
         # provide some sense of progress
         # if i % 100 == 0:
-        print(f"{i}:{j}/{obs_this_plant}\n{obs.plant_name}\n({obs.lat},{obs.lon})")
-        if obs.obs_date:
-            print(f"{obs.obs_date.strftime('%m/%d/%Y')}\n\n")
+        # print(f"{i}:{j}/{obs_this_plant}\n{obs.plant_name}\n({obs.lat},{obs.lon})")
+        # if obs.obs_date:
+        #     print(f"{obs.obs_date.strftime('%m/%d/%Y')}\n\n")
 
+        obs_read.update(1)
         # Once we're done, we should commit our work
         db.session.commit()
+    obs_read.close()
 
 
-
-def get_plant_data(key_number):
+def get_plant_data(key_number, pbar1=None):
     plant_data, alternate_names = get_plant_taxon_report(key_number)
 
     plant = Plant(plant_id=key_number,
@@ -58,7 +67,7 @@ def get_plant_data(key_number):
         usda_plants_url=plant_data["usda_plants_url"],
         cnps_rare_url=plant_data["cnps_rare_url"])
 
-    print(plant)
+    # print(plant)
     db.session.add(plant)
     db.session.commit()
 
@@ -70,5 +79,12 @@ if __name__ == "__main__":
     connect_to_db(app)
     db.create_all()
 
-    for i in range(1,10):
+    plants_fetched = tqdm_gui(total=13000)
+
+    i=1
+    while True:
         get_plant_data(i)
+        plants_fetched.update(1)
+        i+=1
+
+    plants_fetched.close()

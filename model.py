@@ -41,8 +41,8 @@ class Plant(db.Model):
     rare = db.Column(db.Boolean, nullable=False )#bool
     native = db.Column(db.Boolean, nullable=False )#boolean
     # bloom_period = db.Column(db.Array() )#?? datetime tuple???
-    verbose_desc = db.Column(db.String(600), nullable=True)#str. from calscape
-    technical_desc = db.Column(db.String(600), nullable=True )#str. from Jepson eFlora
+    verbose_desc = db.Column(db.String(1000), nullable=True)#str. from calscape
+    technical_desc = db.Column(db.String(1000), nullable=True )#str. from Jepson eFlora
 
     #URLs#
     calphotos_url = db.Column(db.String(150), nullable=True )#str

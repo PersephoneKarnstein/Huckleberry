@@ -1,6 +1,7 @@
 # from datetime import datetime as dt
 # from sqlalchemy import func
 from tqdm import tqdm, tqdm_gui
+import os
 
 from model import Observation, Plant, AltName, connect_to_db, db
 from server import app
@@ -99,6 +100,8 @@ if __name__ == "__main__":
     while True:
         get_plant_data(i)
         plants_fetched.update(1)
+        if i%10 ==0:
+            os.system("pg_dump plants | gzip > plants.gz")
         i+=1
 
     plants_fetched.close()

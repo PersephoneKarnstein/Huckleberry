@@ -15,7 +15,7 @@ class Observation(db.Model):
 
     obs_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     plant_id = db.Column(db.Integer, db.ForeignKey('plants.plant_id'))
-    plant_name = db.Column(db.String(150), nullable=False)
+    # plant_name = db.Column(db.String(150), nullable=False)
     lat = db.Column(db.Float, nullable=False) 
     lon = db.Column(db.Float, nullable=False)
     elev = db.Column(db.Float, nullable=True)
@@ -40,7 +40,8 @@ class Plant(db.Model):
     toxicity_notes = db.Column(db.String(150), nullable=True )#str #toxicity fata only shows up on the taxon report, and only if it *is* toxic 
     rare = db.Column(db.Boolean, nullable=False )#bool
     native = db.Column(db.Boolean, nullable=False )#boolean
-    # bloom_period = db.Column(db.Array() )#?? datetime tuple???
+    bloom_begin = db.Column(db.DateTime, nullable=True )#a month at datetime year=0
+    bloom_end = db.Column(db.DateTime, nullable=True )#a month at datetime year=0
     verbose_desc = db.Column(db.String(1000), nullable=True)#str. from calscape
     technical_desc = db.Column(db.String(1000), nullable=True )#str. from Jepson eFlora
 
@@ -52,24 +53,30 @@ class Plant(db.Model):
     usda_plants_url = db.Column(db.String(150), nullable=True )#str
     cnps_rare_url = db.Column(db.String(150), nullable=True )#str
 
-    #if TOLERANCES#
+    #from CALSCAPE#
+    plant_type = db.Column(db.String(50), nullable=False )#str
+    min_height = db.Column(db.Float, nullable=True )
+    max_height = db.Column(db.Float, nullable=True )
 
-    #if ASSOCIATED ORGANISMS#
 
     def __repr__(self):
         nativeness = "Native" if self.native else "Non-native"
         return f"<{nativeness} plant with ID {self.plant_id} ({self.sci_name})>"
         
 
-# class AltNames(db.Model):
-#     """docstring for AltNames"""
+class AltName(db.Model):
+    """docstring for AltNames"""
 
-#     __tablename__ = "alternate names"
+    __tablename__ = "alternate names"
 
-#     record_num = #int, primary key
-#     plant_id = #int, foreign key
-#     other_name = #str. includes both deprecated scientific names and common names
+    record_num = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    plant_id = db.Column(db.Integer, db.ForeignKey('plants.plant_id'))
+    name = db.Column(db.String(150), nullable=False)#str. includes both deprecated scientific names and common names
 
+    plant = db.relationship("Plant", backref="alternate")
+
+    def __repr__(self):
+        return f"<Record {self.record_num}: {self.plant.sci_name} may also be called {self.name}>"
         
 ##############################################################################
 # Helper functions

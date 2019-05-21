@@ -49,7 +49,7 @@ def process_request_results(obs_list):
     elif isinstance(elem, list): #finds the weird js list
     #Technically this should be in its own loop through the array, but because we know that the metadata list always comes after the list of coordinates, 
     #we can just have it in the same one
-      plant_name = elem[4]
+      # plant_name = elem[4]
       pattern = re.compile("[0-9]{4}(\-[0-9]{2}){2}") #all the dates are stored as "YYYY-MM-DD"
       
       for j, metadatum in enumerate(elem):
@@ -75,15 +75,15 @@ def process_request_results(obs_list):
   # extracted_data = extracted_data[:len(datetimes)]
   extracted_data = np.concatenate( (extracted_data, datetimes), axis=1)
   #so we end up with a np array of elements that look like [lon, lat, datetime]
-  return plant_name, extracted_data
+  return extracted_data #plant_name, 
 
 def obs_to_dict(scientific_name, key_number):
   observations = []
   data = compose_obs_request(scientific_name)
-  plant_name, extracted = process_request_results(data)
+  extracted = process_request_results(data)
 
   for obs in extracted[1:]:
-    obs_dict = {"plant_id":key_number, "plant_name":plant_name, "lat":float(obs[1]), "lon":float(obs[0]), "elev":None, "obs_date":obs[2]}
+    obs_dict = {"plant_id":key_number, "lat":float(obs[1]), "lon":float(obs[0]), "elev":None, "obs_date":obs[2]}
     observations.append(obs_dict)
 
   return observations

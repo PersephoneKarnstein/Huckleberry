@@ -1,13 +1,13 @@
 # from datetime import datetime as dt
-from sqlalchemy import func
+# from sqlalchemy import func
 from tqdm import tqdm, tqdm_gui
 
-from model import Observation, Plant, connect_to_db, db, init_app
+from model import Observation, Plant, AltName, connect_to_db, db
 from server import app
 from selenium_associate_elevations import get_elevation
 
 import CalFlora_post_request
-from collect_plant_data import get_plant_taxon_report
+from collect_plant_data import get_plant_taxon_report, get_plant_data_calscape
 
 def get_observations(scientific_name, plant_id):
     """Load observations from CalFlora and National Map into database."""
@@ -26,7 +26,7 @@ def get_observations(scientific_name, plant_id):
         observation["elev"] = elevation
 
         obs = Observation(plant_id=observation["plant_id"],
-                            plant_name=observation["plant_name"],
+                            # plant_name=observation["plant_name"],
                             lat=observation["lat"],
                             lon=observation["lon"],
                             elev=observation["elev"],
@@ -51,28 +51,40 @@ def get_observations(scientific_name, plant_id):
 
 def get_plant_data(key_number, pbar1=None):
     plant_data, alternate_names = get_plant_taxon_report(key_number)
+    if plant_data is not None:
+        plant_data = get_plant_data_calscape(plant_data)
 
-    plant = Plant(plant_id=key_number,
-        sci_name=plant_data["sci_name"],
-        toxicity_bool=plant_data["toxicity_bool"],
-        toxicity_notes=plant_data["toxicity_notes"],
-        rare=plant_data["rare"],
-        native=plant_data["native"],
-        verbose_desc=plant_data["verbose_desc"],
-        technical_desc=plant_data["technical_desc"],
-        calphotos_url=plant_data["calphotos_url"],
-        characteristics_url=plant_data["characteristics_url"],
-        jepson_url=plant_data["jepson_url"],
-        calscape_url=plant_data["calscape_url"],
-        usda_plants_url=plant_data["usda_plants_url"],
-        cnps_rare_url=plant_data["cnps_rare_url"])
+        plant = Plant(plant_id=key_number,
+                    sci_name=plant_data["sci_name"],
+                    plant_type=plant_data["plant_type"],
+                    min_height=plant_data["min_height"],
+                    max_height=plant_data["max_height"],
+                    toxicity_bool=plant_data["toxicity_bool"],
+                    toxicity_notes=plant_data["toxicity_notes"],
+                    native=plant_data["native"],
+                    rare=plant_data["rare"],
+                    bloom_begin=plant_data["bloom_begin"],
+                    bloom_end=plant_data["bloom_end"],
+                    verbose_desc=plant_data["verbose_desc"],
+                    technical_desc=plant_data["technical_desc"],
+                    calphotos_url=plant_data["calphotos_url"],
+                    characteristics_url=plant_data["characteristics_url"],
+                    jepson_url=plant_data["jepson_url"],
+                    calscape_url=plant_data["calscape_url"],
+                    usda_plants_url=plant_data["usda_plants_url"],
+                    cnps_rare_url=plant_data["cnps_rare_url"])
 
-    # print(plant)
-    db.session.add(plant)
-    db.session.commit()
+        # print(plant)
+        db.session.add(plant)
+        
+        for name in alternate_names:
+            altname = AltName(plant_id=key_number, name=name)
+            db.session.add(altname)
 
-    get_observations(plant_data["sci_name"], plant_data["plant_id"])
+        db.session.commit()
 
+        get_observations(plant_data["sci_name"], plant_data["plant_id"])
+    else: pass
 
 
 if __name__ == "__main__":
@@ -81,7 +93,7 @@ if __name__ == "__main__":
 
     plants_fetched = tqdm_gui(total=13000)
 
-    i=1
+    i=4
     while True:
         get_plant_data(i)
         plants_fetched.update(1)

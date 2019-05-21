@@ -63,22 +63,28 @@ def get_plant_taxon_report(key_number):
   if not goodness[0]:
     if goodness[1] == "Reached last CalFlora record.":
       raise Exception(goodness[1])
+
     else:
       warnings.warn(goodness[1]) #if test_taxon_page_goodness returns False, the second
     #part of the response will be an error message; if it returns True, the second part
-    #of the response will be the scientific name
+    #of the response will be the scientific name. We still need to skip the page though:
+      return None, None
 
   else: pass
 
   plant_data = {"plant_id":key_number,
     "sci_name":goodness[1],
+    "plant_type":"",
+    "min_height":None,
+    "max_height":None,
     "toxicity_bool": False,
     "toxicity_notes": "",   
-    "native":False, 
-    "rare":False,         #
-    "bloom_period":None,     # 
-    "verbose_desc": "",      #
-    "technical_desc": "",    #
+    "native":False, #
+    "rare":False,        
+    "bloom_begin":None,     
+    "bloom_end":None,
+    "verbose_desc": "",      
+    "technical_desc": "", #
     "calphotos_url":None, 
     "characteristics_url": f"https://www.calflora.org/entry/plantchar.html?crn={key_number}", 
     "jepson_url": None, 
@@ -103,10 +109,31 @@ def get_plant_taxon_report(key_number):
   else: pass
 
   ################
+  # BLOOM PERIOD #
+  ################
+  if soup.select_one("#c-bloom").img:
+    bloom_graph = soup.select_one("#c-bloom").img.attrs["src"]
+    bloom_arg = re.search("(what=bloom&arg=\d{1,2}-\d{1,2}:1)", bloom_graph).group(1) 
+    #slowly narrowing down the thing we grab because I'm not 100% sure they won't use it in weird ways
+    bloom_begin, bloom_end = re.search("(\d{1,2}-\d{1,2})", bloom_arg).group(1).split("-")
+    plant_data["bloom_begin"] = dt.strptime(bloom_begin, "%m")
+    plant_data["bloom_end"] = dt.strptime(bloom_end, "%m")
+
+
+  ################
+  ### NATIVITY ###
+  ################
+  calflora_about = soup.select_one("#c-about").get_text()
+  #i'm pretty sure it shows this on every page.
+  plant_data["native"] = (True if "is native to California" in calflora_about else False)
+
+
+  ################
   ### CALPHOTO ###
   ################
   try: #I think there should always be one, but just in case...
     calphotos_url = soup.select("#c-photosFrom")[0].find_all("a", string="CalPhotos")[0].attrs["href"]
+    plant_data["calphotos_url"] = calphotos_url
   except IndexError:
     calphotos_url = None
 
@@ -173,7 +200,7 @@ def get_plant_data_calscape(plant_data):
     if soup.select_one(".about"):
       verbose_desc = soup.select_one(".about").get_text().split("\n")
       verbose_desc = " ".join([i.strip() for i in list(filter(None, verbose_desc))[1:]])
-      plant_data['verbose_desc'] = (verbose_desc if len(verbose_desc)<1000 else verbose_desc[:1000]+"...")
+      plant_data['verbose_desc'] = (verbose_desc if len(verbose_desc)<995 else verbose_desc[:995]+"...")
     else: pass 
 
     if soup.find("legend", string="Plant Description"):
@@ -195,4 +222,6 @@ def get_plant_data_calscape(plant_data):
             min_height, max_height = possible_heights
           elif len(possible_heights) == 1:
             max_height = possible_heights[0]
-
+        else: pass
+    else: pass
+  return plant_data

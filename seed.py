@@ -59,6 +59,8 @@ def get_plant_data(key_number, pbar1=None):
                     plant_type=plant_data["plant_type"],
                     min_height=plant_data["min_height"],
                     max_height=plant_data["max_height"],
+                    plant_shape = plant_data["plant_shape"],
+                    flower_color=plant_data["flower_color"],
                     toxicity_bool=plant_data["toxicity_bool"],
                     toxicity_notes=plant_data["toxicity_notes"],
                     native=plant_data["native"],
@@ -93,7 +95,7 @@ if __name__ == "__main__":
 
     plants_fetched = tqdm_gui(total=13000)
 
-    i=4
+    i=1
     while True:
         get_plant_data(i)
         plants_fetched.update(1)

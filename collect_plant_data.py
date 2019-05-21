@@ -36,7 +36,7 @@ def test_taxon_page_goodness(soup_of_page):
 
   try:
     name_inactive = soup_of_page.select_one("#c-name").i.get_text()
-    scientific_name_or_error_notes = "Name is no longer in active use"
+    scientific_name_or_error_notes = f'Name {unicode_cleaner("#c-about > span", soup_of_page)} is no longer in active use'
     page_good = False
   except AttributeError:
     pass
@@ -77,6 +77,8 @@ def get_plant_taxon_report(key_number):
     "plant_type":"",
     "min_height":None,
     "max_height":None,
+    "plant_shape":[],
+    "flower_color":[],
     "toxicity_bool": False,
     "toxicity_notes": "",   
     "native":False, #
@@ -116,8 +118,8 @@ def get_plant_taxon_report(key_number):
     bloom_arg = re.search("(what=bloom&arg=\d{1,2}-\d{1,2}:1)", bloom_graph).group(1) 
     #slowly narrowing down the thing we grab because I'm not 100% sure they won't use it in weird ways
     bloom_begin, bloom_end = re.search("(\d{1,2}-\d{1,2})", bloom_arg).group(1).split("-")
-    plant_data["bloom_begin"] = dt.strptime(bloom_begin, "%m")
-    plant_data["bloom_end"] = dt.strptime(bloom_end, "%m")
+    plant_data["bloom_begin"] = int(bloom_begin)
+    plant_data["bloom_end"] = int(bloom_end)
 
 
   ################
@@ -209,19 +211,32 @@ def get_plant_data_calscape(plant_data):
         if "Plant Type" in plant_attr.get_text():
           plant_data["plant_type"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1]
           #see if it says if it's like a shrub or a tree or what
+        elif "Form" in plant_attr.get_text():
+          plant_data["plant_shape"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1].split(", ")
+        
+        elif "Flower Color" in plant_attr.get_text():
+          plant_data["flower_color"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1].split(", ")
+        
         else: pass
 
         if "Max. Height" in plant_attr.get_text():
           height_str = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1]
-          meters = re.search("( ft \(\d{0,4}\.{0,1}\d{0,2} - \d{0,4}\.{0,1}\d{0,2} m\))", height_str)
-          #look for the conversion to meters that Calscape does for each plant height and remove it. Because
-          #feet are smaller (and listed first so presumably what was measured?) it should be a more accurate measure.
+          if "ft" in height_str:
+            meters = re.search("( ft \(\d{0,4}\.{0,1}\d{0,2}( -){0,1}( \d{0,4}\.{0,1}\d{0,2}){0,1} m\))", height_str)
+            #look for the conversion to meters that Calscape does for each plant height and remove it. Because
+            #feet are smaller (and listed first so presumably what was measured?) it should be a more accurate measure.
 
-          possible_heights = [float(i) for i in height_str.replace(meters.group(1), "").split(" - ")]
+            possible_heights = [float(i) for i in height_str.replace(meters.group(1), "").split(" - ")]
+          elif "in" in height_str:
+            inches = re.search("( in \(\d{0,4}\.{0,1}\d{0,2}( -){0,1}( \d{0,4}\.{0,1}\d{0,2}){0,1} cm\))", height_str)
+            possible_heights = [float(i)/12. for i in height_str.replace(inches.group(1), "").split(" - ")]
+
+          else: raise Exception
+
           if len(possible_heights)==2:
-            min_height, max_height = possible_heights
+            plant_data["min_height"], plant_data["max_height"] = possible_heights
           elif len(possible_heights) == 1:
-            max_height = possible_heights[0]
+            plant_data["max_height"] = possible_heights[0]
         else: pass
     else: pass
   return plant_data

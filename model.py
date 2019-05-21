@@ -40,8 +40,8 @@ class Plant(db.Model):
     toxicity_notes = db.Column(db.String(150), nullable=True )#str #toxicity fata only shows up on the taxon report, and only if it *is* toxic 
     rare = db.Column(db.Boolean, nullable=False )#bool
     native = db.Column(db.Boolean, nullable=False )#boolean
-    bloom_begin = db.Column(db.DateTime, nullable=True )#a month at datetime year=0
-    bloom_end = db.Column(db.DateTime, nullable=True )#a month at datetime year=0
+    bloom_begin = db.Column(db.Integer, nullable=True )#a month was previously a datetime, but that is larger without adding info, since it only contained a month
+    bloom_end = db.Column(db.Integer, nullable=True )#a month was previously a datetime, but that is larger without adding info, since it only contained a month
     verbose_desc = db.Column(db.String(1000), nullable=True)#str. from calscape
     technical_desc = db.Column(db.String(1000), nullable=True )#str. from Jepson eFlora
 
@@ -57,6 +57,9 @@ class Plant(db.Model):
     plant_type = db.Column(db.String(50), nullable=False )#str
     min_height = db.Column(db.Float, nullable=True )
     max_height = db.Column(db.Float, nullable=True )
+    plant_shape = db.Column(db.ARRAY(db.String(20)), nullable=True)
+    flower_color = db.Column(db.ARRAY(db.String(20)), nullable=True)
+
 
 
     def __repr__(self):
@@ -67,7 +70,7 @@ class Plant(db.Model):
 class AltName(db.Model):
     """docstring for AltNames"""
 
-    __tablename__ = "alternate names"
+    __tablename__ = "alternate_names"
 
     record_num = db.Column(db.Integer, primary_key=True, autoincrement=True)
     plant_id = db.Column(db.Integer, db.ForeignKey('plants.plant_id'))

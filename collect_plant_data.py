@@ -36,10 +36,18 @@ def test_taxon_page_goodness(soup_of_page):
 
   try:
     name_inactive = soup_of_page.select_one("#c-name").i.get_text()
-    scientific_name_or_error_notes = f'Name {unicode_cleaner("#c-about > span", soup_of_page)} is no longer in active use'
+    scientific_name_or_error_notes = f'Name \x1b[1;30;47m{unicode_cleaner("#c-about > span", soup_of_page)}\x1b[0m is no longer in active use'
     page_good = False
   except AttributeError:
     pass
+
+  calflora_about = soup_of_page.select_one("#c-about").get_text()
+  #i'm pretty sure it shows this on every page.
+  plant_nativity = (True if "is native to California" in calflora_about else False)
+  if not plant_nativity:
+    scientific_name_or_error_notes = f'\x1b[1;30;43m{unicode_cleaner("#c-about > span", soup_of_page)}\x1b[0m is not native to California'    
+    page_good = False
+
 
 
   return page_good, scientific_name_or_error_notes
@@ -152,9 +160,9 @@ def get_plant_taxon_report(key_number):
   ################
   href_list = [tag.attrs['href'] for i in [1,2,3] for tag in soup.select_one("#c-moreinfo"+str(i)).find_all("a")]
 
-  jepson_url = [a for a in href_list if "ucjeps" in a][0]
-  calscape_url = [a for a in href_list if "calscape" in a][0]
-  usda_plants_url = [a for a in href_list if "usda" in a][0]
+  jepson_url = str(*[a for a in href_list if "ucjeps" in a])
+  calscape_url = str(*[a for a in href_list if "calscape" in a])
+  usda_plants_url = str(*[a for a in href_list if "usda" in a])
 
   for url_name in ["jepson_url", "calscape_url", "usda_plants_url"]:
     if url_name: plant_data[url_name] = locals()[url_name]
@@ -196,47 +204,50 @@ def get_plant_data_calscape(plant_data):
   if not plant_data["calscape_url"]:
     return plant_data
   else:
-    page = requests.get(plant_data["calscape_url"])
-    soup = BeautifulSoup(page.content, features="lxml")
+    try:
+      page = requests.get(plant_data["calscape_url"])
+      soup = BeautifulSoup(page.content, features="lxml")
 
-    if soup.select_one(".about"):
-      verbose_desc = soup.select_one(".about").get_text().split("\n")
-      verbose_desc = " ".join([i.strip() for i in list(filter(None, verbose_desc))[1:]])
-      plant_data['verbose_desc'] = (verbose_desc if len(verbose_desc)<995 else verbose_desc[:995]+"...")
-    else: pass 
+      if soup.select_one(".about"):
+        verbose_desc = soup.select_one(".about").get_text().split("\n")
+        verbose_desc = " ".join([i.strip() for i in list(filter(None, verbose_desc))[1:]])
+        plant_data['verbose_desc'] = (verbose_desc if len(verbose_desc)<995 else verbose_desc[:995]+"...")
+      else: pass 
 
-    if soup.find("legend", string="Plant Description"):
-      plant_desc = soup.find("legend", string="Plant Description")
-      for plant_attr in plant_desc.parent.find_all("div"):
-        if "Plant Type" in plant_attr.get_text():
-          plant_data["plant_type"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1]
-          #see if it says if it's like a shrub or a tree or what
-        elif "Form" in plant_attr.get_text():
-          plant_data["plant_shape"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1].split(", ")
-        
-        elif "Flower Color" in plant_attr.get_text():
-          plant_data["flower_color"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1].split(", ")
-        
-        else: pass
+      if soup.find("legend", string="Plant Description"):
+        plant_desc = soup.find("legend", string="Plant Description")
+        for plant_attr in plant_desc.parent.find_all("div"):
+          if "Plant Type" in plant_attr.get_text():
+            plant_data["plant_type"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1]
+            #see if it says if it's like a shrub or a tree or what
+          elif "Form" in plant_attr.get_text():
+            plant_data["plant_shape"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1].split(", ")
+          
+          elif "Flower Color" in plant_attr.get_text():
+            plant_data["flower_color"] = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1].split(", ")
+          
+          else: pass
 
-        if "Max. Height" in plant_attr.get_text():
-          height_str = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1]
-          if "ft" in height_str:
-            meters = re.search("( ft \(\d{0,4}\.{0,1}\d{0,2}( -){0,1}( \d{0,4}\.{0,1}\d{0,2}){0,1} m\))", height_str)
-            #look for the conversion to meters that Calscape does for each plant height and remove it. Because
-            #feet are smaller (and listed first so presumably what was measured?) it should be a more accurate measure.
+          if "Max. Height" in plant_attr.get_text():
+            height_str = list(filter(None, plant_attr.get_text().replace("\t", "").split('\n')))[-1]
+            if "ft" in height_str:
+              meters = re.search("( ft \(\d{0,4}\.{0,1}\d{0,2}( -){0,1}( \d{0,4}\.{0,1}\d{0,2}){0,1} m\))", height_str)
+              #look for the conversion to meters that Calscape does for each plant height and remove it. Because
+              #feet are smaller (and listed first so presumably what was measured?) it should be a more accurate measure.
 
-            possible_heights = [float(i) for i in height_str.replace(meters.group(1), "").split(" - ")]
-          elif "in" in height_str:
-            inches = re.search("( in \(\d{0,4}\.{0,1}\d{0,2}( -){0,1}( \d{0,4}\.{0,1}\d{0,2}){0,1} cm\))", height_str)
-            possible_heights = [float(i)/12. for i in height_str.replace(inches.group(1), "").split(" - ")]
+              possible_heights = [float(i) for i in height_str.replace(meters.group(1), "").split(" - ")]
+            elif "in" in height_str:
+              inches = re.search("( in \(\d{0,4}\.{0,1}\d{0,2}( -){0,1}( \d{0,4}\.{0,1}\d{0,2}){0,1} cm\))", height_str)
+              possible_heights = [float(i)/12. for i in height_str.replace(inches.group(1), "").split(" - ")]
 
-          else: raise Exception
+            else: raise Exception
 
-          if len(possible_heights)==2:
-            plant_data["min_height"], plant_data["max_height"] = possible_heights
-          elif len(possible_heights) == 1:
-            plant_data["max_height"] = possible_heights[0]
-        else: pass
-    else: pass
+            if len(possible_heights)==2:
+              plant_data["min_height"], plant_data["max_height"] = possible_heights
+            elif len(possible_heights) == 1:
+              plant_data["max_height"] = possible_heights[0]
+          else: pass
+      else: pass
+    except Exception:
+      print(f"\x1b[1;37;45mAlert: {plant_data['sci_name']} is native, but Calscape has no page on it.\x1b[0m") #this is very sloppy but I don't want to handle the fact that calscape just sometimes doesn't have a page for that 
   return plant_data

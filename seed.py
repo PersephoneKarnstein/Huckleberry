@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     plants_fetched = tqdm_gui(total=13000)
 
-    i=1
+    i=41
     while True:
         get_plant_data(i)
         plants_fetched.update(1)

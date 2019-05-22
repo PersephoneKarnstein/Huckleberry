@@ -1,7 +1,7 @@
 # from datetime import datetime as dt
 # from sqlalchemy import func
 from tqdm import tqdm, tqdm_gui
-import os
+import os, sys
 
 from model import Observation, Plant, AltName, connect_to_db, db
 from server import app
@@ -9,6 +9,9 @@ from selenium_associate_elevations import get_elevation
 
 import CalFlora_post_request
 from collect_plant_data import get_plant_taxon_report, get_plant_data_calscape
+
+startfrom = int(sys.argv[1])
+print(startfrom)
 
 def get_observations(scientific_name, plant_id):
     """Load observations from CalFlora and National Map into database."""
@@ -46,7 +49,7 @@ def get_observations(scientific_name, plant_id):
 
         obs_read.update(1)
         # Once we're done, we should commit our work
-        db.session.commit()
+    db.session.commit()
     obs_read.close()
 
 
@@ -96,7 +99,7 @@ if __name__ == "__main__":
 
     plants_fetched = tqdm_gui(total=13000)
 
-    i=41
+    i=startfrom
     while True:
         get_plant_data(i)
         plants_fetched.update(1)

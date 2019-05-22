@@ -35,8 +35,10 @@ def compose_obs_request(scientific_name):
   r = requests.post('https://www.calflora.org/app/weeddata', headers=HEADERS, data=payload(scientific_name))
   # print(r.text)
   # data = r
-  return ast.literal_eval(r.text[4:]) #weirdly calflora doesn't return things as json, so we need to convert the string into a list
-
+  try:
+    return ast.literal_eval(r.text[4:]) #weirdly calflora doesn't return things as json, so we need to convert the string into a list
+  except ValueError:
+    return ast.literal_eval(r.text[4:].replace("].concat([", ",")[:-1])
 
 def process_request_results(obs_list):
   extracted_data = np.asarray(["lon", "lat"])

@@ -97,7 +97,7 @@ if __name__ == "__main__":
     connect_to_db(app)
     db.create_all()
 
-    plants_fetched = tqdm_gui(total=13000)
+    plants_fetched = tqdm_gui(total=13000, initial=startfrom)
 
     i=startfrom
     while True:

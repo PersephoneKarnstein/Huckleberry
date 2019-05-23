@@ -25,7 +25,7 @@ class Observation(db.Model):
 
 
     def __repr__(self):
-        return f"<Observation of {self.plant_name} at ({self.lat}, {self.lon}) on {self.date if self.date else '(Unknown)'}>"
+        return f"<Observation of {self.plant.sci_name} at ({self.lat}, {self.lon}) on {self.obs_date if self.obs_date else '(Unknown)'}>"
 
 
 class Plant(db.Model):

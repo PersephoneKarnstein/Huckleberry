@@ -1,4 +1,4 @@
-import requests, urllib, ast, re, warnings #json
+import requests, urllib, ast, re, warnings, pdb #json
 import numpy as np
 
 from bs4 import BeautifulSoup
@@ -11,16 +11,19 @@ url = lambda key_number : f"https://www.calflora.org/cgi-bin/species_query.cgi?w
 
 def test_taxon_page_goodness(soup_of_page):
   """Makes sure a page is a viable taxon report before scraping it"""
+  # pdb.set_trace()
   try:
     no_record_text = soup_of_page.select("body > table:nth-child(4)")[0].b.get_text() #this will return "Sorry, no matching record found." when we have reached the last record
     
     if no_record_text == "Sorry, no matching record found.":
       page_good = False
-      scientific_name_or_error_notes = "Reached last CalFlora record."
+      scientific_name_or_error_notes = "There is no calFlora page with this key number. \n(May indicate you have reached the last record in the database.)"
     else:
       page_good = False
       scientific_name_or_error_notes ="Unknown Error: page does not match known formats."
  
+    return page_good, scientific_name_or_error_notes
+
   except IndexError: #if it *doesn't* find that text in that position (i.e., if the record exists), it will raise an index error and come here.
     try:
       scientific_name_or_error_notes = unicode_cleaner("#c-about > span", soup_of_page)
@@ -31,6 +34,8 @@ def test_taxon_page_goodness(soup_of_page):
       scientific_name_or_error_notes = "Unknown Error: Scientific name not found."
       #I haven't actually seen it not be able to find a scientific name here, but it's possible.
 
+    # return page_good, scientific_name_or_error_notes
+
   #ok so if we get to this point without raising an error, it means that you are on a page that (a) is a valid plant record and (b) has a species name.
   #however, if the scientific name is no longer active, we would still get this far so we still need to check for that.
 
@@ -38,6 +43,8 @@ def test_taxon_page_goodness(soup_of_page):
     name_inactive = soup_of_page.select_one("#c-name").i.get_text()
     scientific_name_or_error_notes = f'Name \x1b[1;30;47m{unicode_cleaner("#c-about > span", soup_of_page)}\x1b[0m is no longer in active use'
     page_good = False
+    return page_good, scientific_name_or_error_notes
+
   except AttributeError:
     pass
 
@@ -69,7 +76,7 @@ def get_plant_taxon_report(key_number):
   goodness = test_taxon_page_goodness(soup)
 
   if not goodness[0]:
-    if goodness[1] == "Reached last CalFlora record.":
+    if ("There is no calFlora page with this key number." in goodness[1]) and (key_number > 12900):
       raise Exception(goodness[1])
 
     else:
@@ -143,10 +150,17 @@ def get_plant_taxon_report(key_number):
   ################
   try: #I think there should always be one, but just in case...
     calphotos_url = soup.select("#c-photosFrom")[0].find_all("a", string="CalPhotos")[0].attrs["href"]
-    plant_data["calphotos_url"] = calphotos_url
+    if len(calphotos_url)<150:
+      pass
+    else: 
+      while len(calphotos_url)>150:
+        calphotos_url = "".join(calphotos_url.split("|")[:-1]) #I had a case where it overflowed the column length limit so this is just to hopefully deal with that.
+        if len(calphotos_url)==0: 
+          calphotos_url = None
+          break
   except IndexError:
     calphotos_url = None
-
+  plant_data["calphotos_url"] = calphotos_url
 
   ################
   # COMMON NAMES #
@@ -174,7 +188,7 @@ def get_plant_taxon_report(key_number):
     rarity_tag = soup.select_one("#c-namestatus").select_one(".A10").find_all('a', string="CNPS")[0]
     plant_data["rare"] = True
     plant_data["cnps_rare_url"] = rarity_tag.attrs["href"]
-  except IndexError:pass
+  except (IndexError, AttributeError):pass
   
 
   return plant_data, common_names

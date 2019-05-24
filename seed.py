@@ -26,8 +26,9 @@ def get_observations(scientific_name, plant_id):
 
 
     for j, observation in enumerate(observations):
-        elevation = get_elevation(observation["lat"], observation["lon"])
-        observation["elev"] = elevation
+        # elevation = get_elevation(observation["lat"], observation["lon"])
+        # observation["elev"] = elevation
+        observation["elev"] = None #until I rewrite the elevation request to do multiple locations at once to decrease costs.
 
         obs = Observation(plant_id=observation["plant_id"],
                             # plant_name=observation["plant_name"],

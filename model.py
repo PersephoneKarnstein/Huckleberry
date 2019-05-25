@@ -1,6 +1,9 @@
 """Models and database functions for plants db."""
 
+
 from flask_sqlalchemy import SQLAlchemy
+from geoalchemy2 import Geometry
+
 
 db = SQLAlchemy()
 
@@ -81,6 +84,24 @@ class AltName(db.Model):
     def __repr__(self):
         return f"<Record {self.record_num}: {self.plant.sci_name} may also be called {self.name}>"
         
+
+
+class DistPoly(db.Model):
+    """Initialize a table to hold polygonal representations of the distribution of observations."""
+    
+    __tablename__ = "distribution_polygons"
+
+    poly_num = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    plant_id = db.Column(db.Integer, db.ForeignKey('plants.plant_id'))
+    poly = db.Column(Geometry(geometry_type='POLYGON'))
+
+    plant = db.relationship("Plant", backref="polygon")
+
+    def __repr__(self):
+        return f"<Polygon describing observations of {self.plant.sci_name}>"
+        
+
+
 ##############################################################################
 # Helper functions
 
@@ -97,7 +118,7 @@ def connect_to_db(app):
     """Connect the database to our Flask app."""
 
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres:///plants'
-    app.config['SQLALCHEMY_ECHO'] = False
+    app.config['SQLALCHEMY_ECHO'] = True
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.app = app
     db.init_app(app)

@@ -101,6 +101,20 @@ class DistPoly(db.Model):
         return f"<Polygon describing observations of {self.plant.sci_name}>"
         
 
+class Trail(db.Model):
+    """docstring for Trail"""
+    
+    __tablename__ = "trails"
+
+    trail_num = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(300), nullable=True) #some trails are unnamed, I guess
+    path = db.Column(Geometry(geometry_type='LINESTRING'), nullable = False)
+    trailhead = db.Column(Geometry(geometry_type='POINT'), nullable=False)
+
+    def __repr__(self):
+        unnamed = "unnamed"
+        return f"<The {self.name if self.name else unnamed} trail with trailhead at {self.trailhead}>"
+        
 
 ##############################################################################
 # Helper functions

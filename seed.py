@@ -10,7 +10,9 @@ from selenium_associate_elevations import get_elevation
 import CalFlora_post_request
 from collect_plant_data import get_plant_taxon_report, get_plant_data_calscape
 
-startfrom = int(sys.argv[1])
+from get_transitandtrails_trails import get_trail
+
+startfrom = (int(sys.argv[1]) if len(sys.argv)>1 else 0)
 print(startfrom)
 
 def get_observations(scientific_name, plant_id):
@@ -98,14 +100,20 @@ if __name__ == "__main__":
     connect_to_db(app)
     db.create_all()
 
-    plants_fetched = tqdm_gui(total=13000, initial=startfrom)
+    # plants_fetched = tqdm_gui(total=13000, initial=startfrom)
 
     i=startfrom
     while True:
-        get_plant_data(i)
-        plants_fetched.update(1)
-        if i%10 ==0:
-            os.system("pg_dump plants | gzip > plants.gz")
+        print(f"\rSearching trail {i}")
+        trail = get_trail(i)
+        if trail is not None:
+            db.session.add(trail)
+            db.session.commit()
+        else: pass
+        # get_plant_data(i)
+        # plants_fetched.update(1)
+        # if i%10 ==0:
+        #     os.system("pg_dump plants | gzip > plants.gz")
         i+=1
 
-    plants_fetched.close()
+    # plants_fetched.close()

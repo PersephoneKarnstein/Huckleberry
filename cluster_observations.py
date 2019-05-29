@@ -11,23 +11,16 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
 from random import choice
-from tqdm import tqdm
+from tqdm import tqdm, tqdm_gui
 import time, pdb, geoalchemy2
 
 from alpha_shape import alpha_shape
+from inaturalist_handler import get_inat_obs
 
 
 connect_to_db(app)
 db.create_all()
-plants_to_cluster = db.engine.execute("SELECT COUNT(DISTINCT plant_id) FROM observations;").scalar()
 
-polygon_conversion = tqdm(total=plants_to_cluster, desc="Starting Up...", unit="clusters")
-
-
-obs = Observation.query.filter_by(plant_id=4140).all()
-plant_name = Observation.query.filter_by(plant_id=4140).first().plant.sci_name
-plant_id = Observation.query.filter_by(plant_id=4140).first().plant_id
-latlon = np.asarray([[a.lat, a.lon] for a in obs])
 # pairwise_dists = spdist.pdist(latlon, metric='euclidean')
 
 def order_ring(edges_set, ring_index_set):
@@ -46,7 +39,7 @@ def order_ring(edges_set, ring_index_set):
 def mean_dist_to_neighbor(points):
     """Returns the mean and standard deviation of the distance from a point in [Points] to its nearest neighbor"""
     nn = NearestNeighbors(n_neighbors=2, algorithm='auto', metric='euclidean').fit(points)
-    distances, indices = nn.kneighbors(latlon, return_distance=True)
+    distances, indices = nn.kneighbors(points, return_distance=True)
     return np.mean(distances[:,1]), np.std(distances[:,1])
 
 
@@ -72,7 +65,7 @@ def dbscan_mask(points, epsilon=0.3, verbose=True):
 
 # Black removed and is used for noise instead.
 def get_shape(mask_info, points, plot=False):
-    global polygon_conversion
+    global polygon_conversion, plant_id
     # pdb.set_trace()
     core_samples_mask = mask_info["mask"]
     labels = mask_info["labels"]
@@ -80,7 +73,7 @@ def get_shape(mask_info, points, plot=False):
     unique_labels = set(labels)
     colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
 
-    polygon_conversion.set_description('\x1b[1;37;45mConverting ' +(plant_name if len(plant_name)<23 else plant_name[:20]+"...")+ '\x1b[0m')
+    # polygon_conversion.set_description('\x1b[1;37;45mConverting ' +(plant_name if len(plant_name)<23 else plant_name[:20]+"...")+ '\x1b[0m')
     
     for k, col in zip(unique_labels, colors): #everything within this for loop is operating on a single cluster.
         if plot:
@@ -199,13 +192,41 @@ def add_poly_to_table(polygon, plant_id):
     db.session.add(poly)
 
 
+def run_all():
+    global polygon_conversion, plant_id
+    plants_to_cluster = db.engine.execute("SELECT COUNT(DISTINCT plant_id) FROM observations;").scalar()
 
-mask_info = dbscan_mask(latlon, verbose=False)
-get_shape(mask_info, latlon, plot=False)
+    polygon_conversion = tqdm_gui(total=plants_to_cluster, unit="clusters")
+
+    ids_to_polygonize = db.engine.execute("SELECT DISTINCT plant_id FROM observations;").fetchall()
+    ids_to_polygonize = np.asarray(ids_to_polygonize).T[0]
+
+    for plant_id in ids_to_polygonize:
+        plant_id = int(plant_id)
+        obs = Observation.query.filter_by(plant_id=plant_id).all()
+        plant_name = Observation.query.filter_by(plant_id=plant_id).first().plant.sci_name
+        # plant_id = Observation.query.filter_by(plant_id=4140).first().plant_id
+        latlon = np.asarray([[a.lon, a.lat] for a in obs]) 
+
+        if len(obs)<100: #arbitrarily pick this as the smallest number of observations 
+            # at which we don't need to check in with iNat before proceeding.
+            added_obs = get_inat_obs(plant_name)
+            if added_obs is not None:
+                latlon = np.vstack((latlon, added_obs))
+            else: pass
+
+        if len(latlon)<=5: #without at least 4 points
+            continue #we can deal with these later
 
 
+        print("\r{0:<10} observations of {1:<30}".format(len(latlon), plant_name))
+        mask_info = dbscan_mask(latlon, verbose=False)
+        get_shape(mask_info, latlon, plot=False)
+        polygon_conversion.update(1)
 
-# # if __name__ == "__main__":
+
+if __name__ == "__main__":
+    run_all()
 # plt.title('Estimated number of clusters: %d' % mask_info["n_clusters"])
 # plt.show()
 

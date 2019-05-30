@@ -6,7 +6,9 @@ from sqlalchemy import func
 import numpy as np 
 import matplotlib.pyplot as plt
 import networkx as nx
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, MultiPolygon
+from shapely.ops import cascaded_union, polygonize
+
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
@@ -57,16 +59,14 @@ def dbscan_mask(points, epsilon=0.3, verbose=True):
         print("DBSCAN Epsilon: %0.3f" % epsilon)
         print('Estimated number of clusters: %d' % n_clusters_)
         print('Estimated number of noise points: %d' % n_noise_)
-        print("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(latlon, labels))
+        print("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(points, labels))
 
     return {"mask":core_samples_mask, "labels":labels, "n_clusters":n_clusters_, "n_noise":n_noise_}
 # #############################################################################
 #  convert each cluster to a shape
 
 # Black removed and is used for noise instead.
-def get_shape(mask_info, points, plot=False):
-    global polygon_conversion, plant_id
-    # pdb.set_trace()
+def get_shape(mask_info, points, plant_id, plot=False):
     core_samples_mask = mask_info["mask"]
     labels = mask_info["labels"]
 
@@ -88,24 +88,43 @@ def get_shape(mask_info, points, plot=False):
             epsilon = 0.1
             cluster_polygon = cluster_to_polygon(cluster_members, epsilon, k, verbose=False)
             cluster_stats = mean_dist_to_neighbor(points)
-            add_poly_to_table(cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]), plant_id)
+
+            if not cluster_polygon.is_valid:
+                cluster_polygon = clean_polygon(cluster_polygon, cluster_stats[1]/2.)
+            else: pass
+
+            # print(type(cluster_polygon))
 
         if plot: # Plot result
             xy = points[class_member_mask & core_samples_mask]
             plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col), markeredgecolor='k', markersize=14)
             xy = points[class_member_mask & ~core_samples_mask]
             plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col), markeredgecolor='k', markersize=6)
-            if k != -1:  
-                plt.plot(*cluster_polygon.exterior.xy)
-                try: plt.plot(*cluster_polygon.interior.xy)
-                except AttributeError: pass
 
-                plt.plot(*cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]).exterior.xy)
+            if k != -1:  
+                # plt.plot(*cluster_polygon.exterior.xy)
+                # try: plt.plot(*cluster_polygon.interior.xy)
+                # except AttributeError: pass
+                try:
+                    plt.plot(*cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]).exterior.xy)
+                except AttributeError:
+                    raise AttributeError("\n\n!!!!Multipolygon Detected!!!\n\n")
+
                 try: plt.plot(*cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]).interior.xy)
                 except AttributeError: pass
 
+
+        if k != -1:
+            add_poly_to_table(cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]), plant_id)
+
     db.session.commit()
-    polygon_conversion.update(1)
+
+def clean_polygon(polygon, buffer):
+    """turns a self-intersecting polygon into a valid (non-self-intersecting) one"""
+    pe = polygon.exterior
+    mls = pe.intersection(pe)
+    polygons = list(polygonize(mls))
+    return cascaded_union([a.buffer(buffer) for a in polygons])
 
 
 def cluster_to_polygon(points_in_cluster, epsilon_0, k, verbose=True):#, plot=False):
@@ -148,14 +167,15 @@ def cluster_to_polygon(points_in_cluster, epsilon_0, k, verbose=True):#, plot=Fa
     else: 
         #increment epsilon for alpha_shape() and try again
         epsilon_0 += 0.1
-        return cluster_to_polygon(points_in_cluster, epsilon_0, k, verbose=False)
+        return cluster_to_polygon(points_in_cluster, epsilon_0, k, verbose)
 
 
 def check_polygon_interiority(polygon_cluster):
     """takes the dictionary of polygon data created in get_shape and returns either 
     (True, reformatted polygon) or (False, None) depending on whether or not one single
     polygon in the set contains every other polygon in the set, where reformatted_polygon
-    is a single shapely polygon with the other polygons as holes. This is desirable 
+    is a single y:
+ 143:91   error  pyflakes  invalid syntaxshapely polygon with the other polygons as holes. This is desirable 
     because we know from DBSCAN that this set of points we're looking at SHOULD represent
     a single cluster of observations, and so if we get multiple polygons describing the 
     cluster we know that we set our epsillon too low on the alpha shape generation."""
@@ -192,8 +212,8 @@ def add_poly_to_table(polygon, plant_id):
     db.session.add(poly)
 
 
-def run_all():
-    global polygon_conversion, plant_id
+def run_all(plot=True):
+    global polygon_conversion
     plants_to_cluster = db.engine.execute("SELECT COUNT(DISTINCT plant_id) FROM observations;").scalar()
 
     polygon_conversion = tqdm_gui(total=plants_to_cluster, unit="clusters")
@@ -202,15 +222,19 @@ def run_all():
     ids_to_polygonize = np.asarray(ids_to_polygonize).T[0]
 
     for plant_id in ids_to_polygonize:
+        print("\n\n")
         plant_id = int(plant_id)
         obs = Observation.query.filter_by(plant_id=plant_id).all()
         plant_name = Observation.query.filter_by(plant_id=plant_id).first().plant.sci_name
         # plant_id = Observation.query.filter_by(plant_id=4140).first().plant_id
         latlon = np.asarray([[a.lon, a.lat] for a in obs]) 
+        added_obs = []
 
         if len(obs)<100: #arbitrarily pick this as the smallest number of observations 
             # at which we don't need to check in with iNat before proceeding.
-            added_obs = get_inat_obs(plant_name)
+            try: added_obs = get_inat_obs(plant_name)
+            except Exception: pass
+            print("called iNaturalist. Received {} observations.".format((len(added_obs) if added_obs else 0)))
             if added_obs is not None:
                 latlon = np.vstack((latlon, added_obs))
             else: pass
@@ -219,9 +243,10 @@ def run_all():
             continue #we can deal with these later
 
 
-        print("\r{0:<10} observations of {1:<30}".format(len(latlon), plant_name))
+        print("\r{0:<5} {1:} observations of {2:>5}: {3:<30}".format(len(latlon), 
+            ("({0:<5} from iNaturalist)".format(len(added_obs)) if added_obs else ""), plant_id, plant_name))
         mask_info = dbscan_mask(latlon, verbose=False)
-        get_shape(mask_info, latlon, plot=False)
+        get_shape(mask_info, latlon, plant_id, plot=False)
         polygon_conversion.update(1)
 
 

@@ -1,5 +1,5 @@
 from urllib import parse
-import requests
+import requests, time
 
 
 
@@ -10,9 +10,21 @@ def get_inat_obs(sci_name):
     url = lambda name_str, pagenum : f"https://api.inaturalist.org/v1/observations?place_id=14&taxon_name=\
         {name_str}&quality_grade=needs_id&page={pagenum}&per_page=200&order=desc&order_by=created_at"
 
-    r = requests.get(url(name_str, pagenum))
+    starttime = time.time()
 
-    resultpage = r.json()
+    while True:
+        try:
+            r = requests.get(url(name_str, pagenum))
+            resultpage = r.json()
+            break
+        except Exception:
+            timenow = time.time()
+            if timenow>starttime+10:
+                resultpage = {"total_results":0}
+                break
+            else:
+                time.sleep(0.5)
+                continue
 
     added_obs = []
 

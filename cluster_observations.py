@@ -83,39 +83,42 @@ def get_shape(mask_info, points, plant_id, plot=False):
 
         class_member_mask = (labels == k)
         cluster_members = points[class_member_mask]
-        #calculate the alpha shape only for one cluster at a time
-        if k != -1: 
-            epsilon = 0.1
-            cluster_polygon = cluster_to_polygon(cluster_members, epsilon, k, verbose=False)
-            cluster_stats = mean_dist_to_neighbor(points)
+        if len(cluster_members) < 4:
+            continue
+        else:
+            #calculate the alpha shape only for one cluster at a time
+            if k != -1: 
+                epsilon = 0.1
+                cluster_polygon = cluster_to_polygon(cluster_members, epsilon, k, verbose=False)
+                cluster_stats = mean_dist_to_neighbor(points)
 
-            if not cluster_polygon.is_valid:
-                cluster_polygon = clean_polygon(cluster_polygon, cluster_stats[1]/2.)
-            else: pass
+                if not cluster_polygon.is_valid:
+                    cluster_polygon = clean_polygon(cluster_polygon, cluster_stats[1]/2.)
+                else: pass
 
-            # print(type(cluster_polygon))
+                # print(type(cluster_polygon))
 
-        if plot: # Plot result
-            xy = points[class_member_mask & core_samples_mask]
-            plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col), markeredgecolor='k', markersize=14)
-            xy = points[class_member_mask & ~core_samples_mask]
-            plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col), markeredgecolor='k', markersize=6)
+            if plot: # Plot result
+                xy = points[class_member_mask & core_samples_mask]
+                plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col), markeredgecolor='k', markersize=14)
+                xy = points[class_member_mask & ~core_samples_mask]
+                plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col), markeredgecolor='k', markersize=6)
 
-            if k != -1:  
-                # plt.plot(*cluster_polygon.exterior.xy)
-                # try: plt.plot(*cluster_polygon.interior.xy)
-                # except AttributeError: pass
-                try:
-                    plt.plot(*cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]).exterior.xy)
-                except AttributeError:
-                    raise AttributeError("\n\n!!!!Multipolygon Detected!!!\n\n")
+                if k != -1:  
+                    # plt.plot(*cluster_polygon.exterior.xy)
+                    # try: plt.plot(*cluster_polygon.interior.xy)
+                    # except AttributeError: pass
+                    try:
+                        plt.plot(*cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]).exterior.xy)
+                    except AttributeError:
+                        raise AttributeError("\n\n!!!!Multipolygon Detected!!!\n\n")
 
-                try: plt.plot(*cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]).interior.xy)
-                except AttributeError: pass
+                    try: plt.plot(*cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]).interior.xy)
+                    except AttributeError: pass
 
 
-        if k != -1:
-            add_poly_to_table(cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]), plant_id)
+            if k != -1:
+                add_poly_to_table(cluster_polygon.buffer(cluster_stats[0]+2*cluster_stats[1]), plant_id)
 
     db.session.commit()
 
@@ -216,10 +219,17 @@ def run_all(plot=True):
     global polygon_conversion
     plants_to_cluster = db.engine.execute("SELECT COUNT(DISTINCT plant_id) FROM observations;").scalar()
 
-    polygon_conversion = tqdm_gui(total=plants_to_cluster, unit="clusters")
-
     ids_to_polygonize = db.engine.execute("SELECT DISTINCT plant_id FROM observations;").fetchall()
-    ids_to_polygonize = np.asarray(ids_to_polygonize).T[0]
+    ids_to_polygonize = set(np.asarray(ids_to_polygonize).T[0])
+
+    ids_already_found = db.engine.execute("SELECT DISTINCT plant_id FROM distribution_polygons;").fetchall()
+    ids_already_found = set(np.asarray(ids_already_found).T[0])
+
+    for plant_id in ids_already_found:
+        ids_to_polygonize.discard(plant_id)
+
+    polygon_conversion = tqdm_gui(total=len(ids_to_polygonize), unit="clusters")
+
 
     for plant_id in ids_to_polygonize:
         print("\n\n")
@@ -236,7 +246,9 @@ def run_all(plot=True):
             except Exception: pass
             print("called iNaturalist. Received {} observations.".format((len(added_obs) if added_obs else 0)))
             if added_obs is not None:
-                latlon = np.vstack((latlon, added_obs))
+                try:
+                    latlon = np.vstack((latlon, added_obs))
+                except ValueError: pass
             else: pass
 
         if len(latlon)<=5: #without at least 4 points

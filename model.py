@@ -1,6 +1,9 @@
 """Models and database functions for plants db."""
 
+
 from flask_sqlalchemy import SQLAlchemy
+from geoalchemy2 import Geometry
+
 
 db = SQLAlchemy()
 
@@ -81,6 +84,38 @@ class AltName(db.Model):
     def __repr__(self):
         return f"<Record {self.record_num}: {self.plant.sci_name} may also be called {self.name}>"
         
+
+
+class DistPoly(db.Model):
+    """Initialize a table to hold polygonal representations of the distribution of observations."""
+    
+    __tablename__ = "distribution_polygons"
+
+    poly_num = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    plant_id = db.Column(db.Integer, db.ForeignKey('plants.plant_id'))
+    poly = db.Column(Geometry(geometry_type='POLYGON'))
+
+    plant = db.relationship("Plant", backref="polygon")
+
+    def __repr__(self):
+        return f"<Polygon describing observations of {self.plant.sci_name}>"
+        
+
+class Trail(db.Model):
+    """docstring for Trail"""
+    
+    __tablename__ = "trails"
+
+    trail_num = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(300), nullable=True) #some trails are unnamed, I guess
+    path = db.Column(Geometry(geometry_type='LINESTRING'), nullable = False)
+    trailhead = db.Column(Geometry(geometry_type='POINT'), nullable=False)
+
+    def __repr__(self):
+        unnamed = "unnamed"
+        return f"<The {self.name if self.name else unnamed} trail with trailhead at {self.trailhead}>"
+        
+
 ##############################################################################
 # Helper functions
 

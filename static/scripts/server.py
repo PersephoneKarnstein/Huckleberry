@@ -1,6 +1,6 @@
 from jinja2 import StrictUndefined
 
-from flask import Flask
+from flask import Flask, request, render_template, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 
 from model import connect_to_db, db
@@ -21,6 +21,8 @@ def index():
     """Homepage."""
 
     return render_template("bootstrap.html")
+
+
 
 
 if __name__ == "__main__":

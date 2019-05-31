@@ -236,7 +236,7 @@ def run_all(plot=True):
     ids_already_found = db.engine.execute("SELECT DISTINCT plant_id FROM distribution_polygons;").fetchall()
     ids_already_found = set(np.asarray(ids_already_found).T[0])
 
-    ids_to_polygonize.discard(11566)
+    # ids_to_polygonize.discard(11566) #this one keeps breaking and I don't know why. Fix later.
 
     for plant_id in ids_already_found:
         ids_to_polygonize.discard(plant_id)

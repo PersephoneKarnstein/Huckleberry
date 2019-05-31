@@ -20,7 +20,7 @@ app.jinja_env.undefined = StrictUndefined
 def index():
     """Homepage."""
 
-    return "<html><body>Placeholder for the homepage.</body></html>"
+    return render_template("bootstrap.html")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,525 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Jekyll v3.8.5">
+    <title>Cover Template · Bootstrap</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/4.3/examples/cover/">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+
+    <!-- Custom styles for this template -->
+    <link href="cover.css" rel="stylesheet">
+    <link href="custom.css" rel="stylesheet">
+  </head>
+
+
+
+
+
+<section class="section">
+<div id="map-google"></div>
+
+<script>
+  <!--Google map-->
+  function initMap() {
+    var mapDiv = document.getElementById('map-google');
+    var styledMapType = new google.maps.StyledMapType(
+        [
+          {
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#ebe3cd"
+              }
+            ]
+          },
+          {
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#523735"
+              }
+            ]
+          },
+          {
+            "elementType": "labels.text.stroke",
+            "stylers": [
+              {
+                "color": "#f5f1e6"
+              }
+            ]
+          },
+          {
+            "featureType": "administrative",
+            "elementType": "geometry.stroke",
+            "stylers": [
+              {
+                "color": "#c9b2a6"
+              }
+            ]
+          },
+          {
+            "featureType": "landscape.man_made",
+            "elementType": "labels",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "landscape.man_made",
+            "elementType": "labels.icon",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "landscape.natural",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#dfd2ae"
+              }
+            ]
+          },
+          {
+            "featureType": "landscape.natural.terrain",
+            "stylers": [
+              {
+                "visibility": "on"
+              }
+            ]
+          },
+          {
+            "featureType": "landscape.natural.terrain",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "visibility": "on"
+              }
+            ]
+          },
+          {
+            "featureType": "landscape.natural.terrain",
+            "elementType": "geometry.fill",
+            "stylers": [
+              {
+                "visibility": "on"
+              }
+            ]
+          },
+          {
+            "featureType": "landscape.natural.terrain",
+            "elementType": "geometry.stroke",
+            "stylers": [
+              {
+                "visibility": "on"
+              }
+            ]
+          },
+          {
+            "featureType": "poi",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "poi",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#dfd2ae"
+              }
+            ]
+          },
+          {
+            "featureType": "poi",
+            "elementType": "labels.text",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "poi",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#93817c"
+              }
+            ]
+          },
+          {
+            "featureType": "poi.park",
+            "stylers": [
+              {
+                "visibility": "on"
+              }
+            ]
+          },
+          {
+            "featureType": "poi.park",
+            "elementType": "geometry.fill",
+            "stylers": [
+              {
+                "color": "#a5b076"
+              }
+            ]
+          },
+          {
+            "featureType": "poi.park",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#005f00"
+              }
+            ]
+          },
+          {
+            "featureType": "road",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#f5f1e6"
+              }
+            ]
+          },
+          {
+            "featureType": "road",
+            "elementType": "labels.icon",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "road.arterial",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#fdfcf8"
+              }
+            ]
+          },
+          {
+            "featureType": "road.arterial",
+            "elementType": "labels",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#f8c967"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway",
+            "elementType": "geometry.stroke",
+            "stylers": [
+              {
+                "color": "#e9bc62"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway",
+            "elementType": "labels",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway.controlled_access",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#e98d58"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway.controlled_access",
+            "elementType": "geometry.stroke",
+            "stylers": [
+              {
+                "color": "#db8555"
+              }
+            ]
+          },
+          {
+            "featureType": "road.local",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "road.local",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#806b63"
+              }
+            ]
+          },
+          {
+            "featureType": "transit",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.line",
+            "stylers": [
+              {
+                "visibility": "on"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.line",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#dfd2ae"
+              },
+              {
+                "visibility": "on"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.line",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#8f7d77"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.line",
+            "elementType": "labels.text.stroke",
+            "stylers": [
+              {
+                "color": "#ebe3cd"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.station",
+            "stylers": [
+              {
+                "visibility": "simplified"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.station",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#dfd2ae"
+              }
+            ]
+          },
+          {
+            "featureType": "water",
+            "elementType": "geometry.fill",
+            "stylers": [
+              {
+                "color": "#b9d3c2"
+              }
+            ]
+          },
+          {
+            "featureType": "water",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#92998d"
+              }
+            ]
+          }
+        ],
+            {name: 'Huckleberry'});
+    var map = new google.maps.Map(mapDiv, {
+        center: {
+            lat: 37.7836807,
+            lng: -122.4127467
+        },
+        zoom: 10,
+        fullscreenControl: false,
+        streetViewControl: false,
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+            mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain',
+                    'styled_map'],
+            // style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+            position: google.maps.ControlPosition.BOTTOM_CENTER
+                  }
+    });
+    map.mapTypes.set('styled_map', styledMapType);
+    map.setMapTypeId('styled_map');
+
+}
+
+$(document).ready(function() {
+    initMap();
+});
+
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+});
+
+$(document).click(function(e) {
+  if (!$(e.target).is('.card-body')) {
+      $('.collapse').collapse('hide');      
+    }
+});
+</script>
+</section>
+
+
+<div class="row">
+<section class="glass-blur">
+<nav class="navbar navbar-expand-lg fixed-top navbar-light" style="background:inherit;text-shadow: none;box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);z-index: 1050">
+  <a class="navbar-brand" href="#">
+    <img src="resources/raspberry-pi-brands.svg" width="30" height="30" alt="">
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Features</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Pricing</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Dropdown link
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink" >
+          <a class="dropdown-item" href="#">Action</a>
+          <a class="dropdown-item" href="#">Another action</a>
+          <a class="dropdown-item" href="#">Something else here</a>
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>
+</section>
+</div>
+
+<div class="row justify-content-start" style="padding-top: 70px;z-index: 1030">
+  <div class="col">
+<p>
+  <a class="btn btn-primary glass-blur btn-light" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">
+  <span data-toggle="tooltip" data-html="true" data-placement="bottom" title="Show trails featuring a plant">
+    <img src="resources/pagelines-brands.svg" width="20" height="20" alt=""><img src="resources/caret-right-solid.svg" width="20" height="20" alt=""><img src="resources/hiking-solid.svg" width="20" height="20" alt="">
+  </span>
+</a>
+  <button class="btn btn-primary glass-blur btn-light" type="button" data-toggle="collapse" data-target="#multiCollapseExample2" aria-expanded="false" aria-controls="multiCollapseExample2">
+  <span data-toggle="tooltip" data-html="true" data-placement="bottom" title="Show plants visible along a trail">
+    <img src="resources/hiking-solid.svg" width="20" height="20" alt=""><img src="resources/caret-right-solid.svg" width="20" height="20" alt=""><img src="resources/pagelines-brands.svg" width="20" height="20" alt="">
+  </span>
+</button>
+  <button class="btn btn-primary glass-blur btn-light" type="button" data-toggle="collapse" data-target="#multiCollapseExample3" aria-expanded="false" aria-controls="multiCollapseExample3">
+    <span data-toggle="tooltip" data-html="true" data-placement="bottom" title="Create a scavenger hunt">
+      <img src="resources/binoculars-solid.svg" width="20" height="20" alt=""><img src="resources/clipboard-list-solid.svg" width="20" height="20" alt="">
+    </span>
+  </button>
+</p>
+<div class="row justify-content-left">
+  <div class="col col-4">
+    <div class="collapse multi-collapse" id="multiCollapseExample1">
+      <div class="card card-body">
+        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
+      </div>
+    </div>
+
+    <div class="collapse multi-collapse" id="multiCollapseExample2">
+      <div class="card card-body">
+        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.hlkasdjhflksjdhflakjsdhflkahdlk sdf kagjfgd kj gfkdj sk jsgkhfks gdhfgls glsdkjh slkjhg dkjfg,ks hlisuhg lsidhfg lsdhgl idhgAnim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.hlkasdjhflksjdhflakjsdhflkahdlk sdf kagjfgd kj gfkdj sk jsgkhfks gdhfgls glsdkjh slkjhg dkjfg,ks hlisuhg lsidhfg lsdhgl idhgAnim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.hlkasdjhflksjdhflakjsdhflkahdlk sdf kagjfgd kj gfkdj sk jsgkhfks gdhfgls glsdkjh slkjhg dkjfg,ks hlisuhg lsidhfg lsdhgl idhgAnim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.hlkasdjhflksjdhflakjsdhflkahdlk sdf kagjfgd kj gfkdj sk jsgkhfks gdhfgls glsdkjh slkjhg dkjfg,ks hlisuhg lsidhfg lsdhgl idhgAnim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.hlkasdjhflksjdhflakjsdhflkahdlk sdf kagjfgd kj gfkdj sk jsgkhfks gdhfgls glsdkjh slkjhg dkjfg,ks hlisuhg lsidhfg lsdhgl idhg
+      </div>
+    </div>
+
+    <div class="collapse multi-collapse" id="multiCollapseExample3">
+      <div class="card card-body">
+        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- 
+  <main role="main" class="inner cover">
+    <h1 class="cover-heading">Cover your page.</h1>
+    <p class="lead">Cover is a one-page template for building simple and beautiful home pages. Download, edit the text, and add your own fullscreen background photo to make it your own.</p>
+    <p class="lead">
+      <a href="#" class="btn btn-lg btn-secondary">Learn more</a>
+    </p>
+  </main>
+
+
+ -->
+
+
+
+
+  <footer class="mastfoot mt-auto">
+    <div class="inner">
+      <p>Cover template for <a href="https://getbootstrap.com/">Bootstrap</a>, by <a href="https://twitter.com/mdo">@mdo</a>.</p>
+    </div>
+  </footer>
+</div>
+
+
+
+
+
+
+
+
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPf9TORElnFuqDKhpnFpTX-ByomS7h2tY&callback=initMap" async defer></script>
+<!-- <script src='https://html2canvas.hertzen.com/dist/html2canvas.js'></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.bundle.js" crossorigin="anonymous"></script>
+</body>
+</html>

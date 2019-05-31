@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from shapely.geometry import Polygon, MultiPolygon
 from shapely.ops import cascaded_union, polygonize
+from scipy.spatial.qhull import QhullError
 
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import DBSCAN
@@ -132,7 +133,17 @@ def clean_polygon(polygon, buffer):
 
 def cluster_to_polygon(points_in_cluster, epsilon_0, k, verbose=True):#, plot=False):
     if verbose: print("Alpha shape: testing with epsilon = %0.3f" % epsilon_0)
-    edges = alpha_shape(points_in_cluster, epsilon_0, only_outer=True)
+    while True:
+        try:
+            edges = alpha_shape(points_in_cluster, epsilon_0, only_outer=True)
+            break
+        except QhullError:
+            if epsilon_0>2:
+                edges = []
+            else:
+                epsilon_0 += 0.01
+                print(f"Updated epsilon_0 to {epsilon_0}.")
+
     #edges contains the indices of the points, not the points themselves.
 
     G = nx.Graph()
@@ -224,6 +235,8 @@ def run_all(plot=True):
 
     ids_already_found = db.engine.execute("SELECT DISTINCT plant_id FROM distribution_polygons;").fetchall()
     ids_already_found = set(np.asarray(ids_already_found).T[0])
+
+    ids_to_polygonize.discard(11566)
 
     for plant_id in ids_already_found:
         ids_to_polygonize.discard(plant_id)

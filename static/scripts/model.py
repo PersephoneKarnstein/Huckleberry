@@ -3,6 +3,8 @@
 
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
+
 
 
 db = SQLAlchemy()
@@ -113,7 +115,7 @@ class Trail(db.Model):
 
     def __repr__(self):
         unnamed = "unnamed"
-        return f"<The {self.name if self.name else unnamed} trail with trailhead at {self.trailhead}>"
+        return f"<The {self.name if self.name else unnamed} trail with trailhead at {list(to_shape(self.trailhead).xy)}>"
         
 
 ##############################################################################

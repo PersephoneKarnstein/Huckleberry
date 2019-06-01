@@ -30,7 +30,7 @@ def compose_obs_request(scientific_name):
                   "Accept-Encoding": "gzip, deflate, br",
                     "Accept-Language": "en-US,en;q=0.9"}
 
-  payload = lambda scientific_name: f"7|0|25|https://www.calflora.org/entry/com.gmap3.DGrid2A/|835B15F29DDC753A8E097286A8997BBE|com.cfapp.client.wentry.WeedDataService|readPdas|java.util.HashMap/1797211028|I|[D/2047612875|java.lang.String/2004016611|taxon|{scientific_name}|georeferenced|t|addnloc|cch|wint|r|aor|DGR|hfil|R|griddiv|100|cell|xun|0|1|2|3|4|3|5|6|7|5|10|8|9|8|10|8|11|8|12|8|13|-5|8|14|-5|8|15|8|16|8|17|8|18|8|19|8|20|8|21|8|22|8|23|-5|8|24|8|25|2500|7|4|-125.000000000000|42.50000000000000|-114.000000000000|32.500000000000000|".replace("×","X")
+  payload = lambda scientific_name: f"7|0|25|https://www.calflora.org/entry/com.gmap3.DGrid2A/|835B15F29DDC753A8E097286A8997BBE|com.cfapp.client.wentry.WeedDataService|readPdas|java.util.HashMap/1797211028|I|[D/2047612875|java.lang.String/2004016611|taxon|{scientific_name}|georeferenced|t|addnloc|cch|wint|r|aor|DGR|hfil|R|griddiv|100|cell|xun|0|1|2|3|4|3|5|6|7|5|10|8|9|8|10|8|11|8|12|8|13|-5|8|14|-5|8|15|8|16|8|17|8|18|8|19|8|20|8|21|8|22|8|23|-5|8|24|8|25|2500|7|4|-125.000000000000|42.50000000000000|-114.000000000000|32.50000000000000|"0.replace("×","X")
 
 
   r = requests.post('https://www.calflora.org/app/weeddata', headers=HEADERS, data=payload(scientific_name))

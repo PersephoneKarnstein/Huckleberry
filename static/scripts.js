@@ -363,13 +363,19 @@ function initMap() {
   map.addListener('bounds_changed', function() {getTrails()})
 };
 
+/////////////////////////////////////////////////////////////////////////////
+
 $(document).ready(function() {
     initMap();
 });
 
+/////////////////////////////////////////////////////////////////////////////
+
 $(function () {
   $('[data-toggle="tooltip"]').tooltip()
 });
+
+/////////////////////////////////////////////////////////////////////////////
 
 $(document).click(function(e) {
   if (!$(e.target).is('.card-body')) {
@@ -377,24 +383,53 @@ $(document).click(function(e) {
     }
 });
 
-// this needs to come after the page has loaded
+/////////////////////////////////////////////////////////////////////////////
 
 function getTrails() {
   let mapBounds = map.getBounds().toJSON()
+  console.log(mapBounds)
 
   $.ajax({
     url: '/get-trails.json',
     dataType: 'json',
     type: 'POST',
     contentType: 'application/json',
-    data: mapBounds,
+    data: JSON.stringify(mapBounds),
     processData: false,
-    success: function( data, ){
+    success: function(data, textStatus, jQxhr ){
+        console.log(data);
+        loadTrails(data)
         // $('#response pre').html( JSON.stringify( data ) );
         },
+    error: function() {alert("Error loading trails.")}
   });
-
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+function loadTrails(jsonTrails){
+  // this is pseudocode
+  // var responseData = JSON.parse(jsonTrails);
+  // console.log(typeof jsonTrails);
+  for (var trail in jsonTrails){
+    console.log(trail)
+    // console.log(typeof trail)
+    // console.log(jsonTrails[trail])
+    // console.log(typeof jsonTrails[trail])
+    let trailPath = new google.maps.Polyline({
+        path: jsonTrails[trail]["path"],
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+          });
+
+    trailPath.setMap(map);
+    }
+
+  };
+
+/////////////////////////////////////////////////////////////////////////////
 
 function cat(t) {
   // body...

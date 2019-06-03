@@ -359,6 +359,8 @@ function initMap() {
   });
   map.mapTypes.set('styled_map', styledMapType);
   map.setMapTypeId('styled_map');
+  map.addListener('idle', function() {cat()})
+  map.addListener('bounds_changed', function() {getTrails()})
 };
 
 $(document).ready(function() {
@@ -376,6 +378,26 @@ $(document).click(function(e) {
 });
 
 // this needs to come after the page has loaded
+
+function getTrails() {
+  let mapBounds = map.getBounds().toJSON()
+
+  $.ajax({
+    url: '/get-trails.json',
+    dataType: 'json',
+    type: 'POST',
+    contentType: 'application/json',
+    data: mapBounds,
+    processData: false,
+    success: function( data, ){
+        // $('#response pre').html( JSON.stringify( data ) );
+        },
+  });
+
+}
+
+function cat(t) {
+  // body...
 var flightPlanCoordinates = [
   {lat: 37.772, lng: -122.214},
   {lat: 21.291, lng: -157.821},
@@ -392,3 +414,4 @@ var flightPath = new google.maps.Polyline({
 });
 
 flightPath.setMap(map);
+};

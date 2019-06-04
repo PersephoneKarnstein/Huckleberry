@@ -49,11 +49,11 @@ def get_trails():
             [{"lat":float(x[1]), "lng":float(x[0])} for x in trail_points]
 
         visible_trails[trail.trail_num]["name"] = trail.name
-        print("\n\n\n", (to_shape(trail.trailhead).xy[0])[0], type((to_shape(trail.trailhead).xy[0])[0]), "\n\n\n")
+        # print("\n\n\n", (to_shape(trail.trailhead).xy[0])[0], type((to_shape(trail.trailhead).xy[0])[0]), "\n\n\n")
         visible_trails[trail.trail_num]["trailhead"] = \
             {"lat":(to_shape(trail.trailhead).xy[1])[0], "lng":(to_shape(trail.trailhead).xy[0])[0]}
 
-    print(jsonify(visible_trails))
+    # print(jsonify(visible_trails))
     return jsonify(visible_trails)
 
 if __name__ == "__main__":

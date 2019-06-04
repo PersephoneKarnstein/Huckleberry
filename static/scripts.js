@@ -1,6 +1,7 @@
 var map;
 var json;
 var infoWindow;
+var allPolylines = [];
 
 function initMap() {
   var mapDiv = document.getElementById('map-google');
@@ -378,11 +379,11 @@ $(function () {
 
 /////////////////////////////////////////////////////////////////////////////
 
-$(document).click(function(e) {
-  if (!$(e.target).is('.card-body')) {
-      $('.collapse').collapse('hide');      
-    }
-});
+// $(document).click(function(e) {
+//   if (!$(e.target).is('.card-body')) {
+//       $('.collapse').collapse('hide');      
+//     }
+// });
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -409,34 +410,36 @@ function getTrails() {
 function loadTrails(jsonTrails){
 
   for (var trail in jsonTrails){
-    let trailPath = new google.maps.Polyline({
-        path: jsonTrails[trail]["path"],
-        geodesic: true,
-        strokeColor: '#b50909',
-        strokeOpacity: 0.25,
-        strokeWeight: 2,
-        jointType: 2,
-        clickable: true
-          });
+    if (!allPolylines.includes(trail)) {
+      allPolylines.push(trail);
+      let trailPath = new google.maps.Polyline({
+          path: jsonTrails[trail]["path"],
+          geodesic: true,
+          strokeColor: '#b50909',
+          strokeOpacity: 0.25,
+          strokeWeight: 2,
+          jointType: 2,
+          clickable: true
+            });
 
-    trailPath.setMap(map);
-    infoWindow = new google.maps.InfoWindow();
-    trailPath.html = jsonTrails[trail]["name"];
+      trailPath.setMap(map);
+      infoWindow = new google.maps.InfoWindow();
+      trailPath.html = jsonTrails[trail]["name"];
 
-    google.maps.event.addListener(trailPath, 'mouseover', function(e) {
-       infoWindow.setPosition(e.latLng);
-       infoWindow.setContent(this.html);
-       infoWindow.open(map, this);
-       //for future decelopment, I'd like to also have the trailhead appear and disappear as you mouseover
-       });
+      google.maps.event.addListener(trailPath, 'mouseover', function(e) {
+         infoWindow.setPosition(e.latLng);
+         infoWindow.setContent(this.html);
+         infoWindow.open(map, this);
+         //for future decelopment, I'd like to also have the trailhead appear and disappear as you mouseover
+         });
 
-    // Close the InfoWindow on mouseout:
-    google.maps.event.addListener(trailPath, 'mouseout', function() {
-       infoWindow.close();
-       });
-
+      // Close the InfoWindow on mouseout:
+      google.maps.event.addListener(trailPath, 'mouseout', function() {
+         infoWindow.close();
+         });
+      }
     }
 
   };
 
-/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////

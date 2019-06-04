@@ -1,5 +1,7 @@
 var map;
 var json;
+var infoWindow;
+
 function initMap() {
   var mapDiv = document.getElementById('map-google');
   var styledMapType = new google.maps.StyledMapType(
@@ -343,10 +345,10 @@ function initMap() {
           {name: 'Huckleberry'});
   map = new google.maps.Map(mapDiv, {
       center: {
-          lat: 37.7836807,
-          lng: -122.4127467
+          lat: 37.815962882132034,
+          lng: -122.30391338701173
       },
-      zoom: 10,
+      zoom: 12,
       fullscreenControl: false,
       streetViewControl: false,
       mapTypeControl: true,
@@ -359,7 +361,6 @@ function initMap() {
   });
   map.mapTypes.set('styled_map', styledMapType);
   map.setMapTypeId('styled_map');
-  map.addListener('idle', function() {cat()})
   map.addListener('bounds_changed', function() {getTrails()})
 };
 
@@ -387,7 +388,7 @@ $(document).click(function(e) {
 
 function getTrails() {
   let mapBounds = map.getBounds().toJSON()
-  console.log(mapBounds)
+  // console.log(mapBounds)
 
   $.ajax({
     url: '/get-trails.json',
@@ -397,9 +398,7 @@ function getTrails() {
     data: JSON.stringify(mapBounds),
     processData: false,
     success: function(data, textStatus, jQxhr ){
-        console.log(data);
         loadTrails(data)
-        // $('#response pre').html( JSON.stringify( data ) );
         },
     error: function() {alert("Error loading trails.")}
   });
@@ -408,45 +407,36 @@ function getTrails() {
 /////////////////////////////////////////////////////////////////////////////
 
 function loadTrails(jsonTrails){
-  // this is pseudocode
-  // var responseData = JSON.parse(jsonTrails);
-  // console.log(typeof jsonTrails);
+
   for (var trail in jsonTrails){
-    console.log(trail)
-    // console.log(typeof trail)
-    // console.log(jsonTrails[trail])
-    // console.log(typeof jsonTrails[trail])
     let trailPath = new google.maps.Polyline({
         path: jsonTrails[trail]["path"],
         geodesic: true,
-        strokeColor: '#FF0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 2
+        strokeColor: '#b50909',
+        strokeOpacity: 0.25,
+        strokeWeight: 2,
+        jointType: 2,
+        clickable: true
           });
 
     trailPath.setMap(map);
+    infoWindow = new google.maps.InfoWindow();
+    trailPath.html = jsonTrails[trail]["name"];
+
+    google.maps.event.addListener(trailPath, 'mouseover', function(e) {
+       infoWindow.setPosition(e.latLng);
+       infoWindow.setContent(this.html);
+       infoWindow.open(map, this);
+       //for future decelopment, I'd like to also have the trailhead appear and disappear as you mouseover
+       });
+
+    // Close the InfoWindow on mouseout:
+    google.maps.event.addListener(trailPath, 'mouseout', function() {
+       infoWindow.close();
+       });
+
     }
 
   };
 
 /////////////////////////////////////////////////////////////////////////////
-
-function cat(t) {
-  // body...
-var flightPlanCoordinates = [
-  {lat: 37.772, lng: -122.214},
-  {lat: 21.291, lng: -157.821},
-  {lat: -18.142, lng: 178.431},
-  {lat: -27.467, lng: 153.027}
-];
-
-var flightPath = new google.maps.Polyline({
-  path: flightPlanCoordinates,
-  geodesic: true,
-  strokeColor: '#FF0000',
-  strokeOpacity: 1.0,
-  strokeWeight: 2
-});
-
-flightPath.setMap(map);
-};

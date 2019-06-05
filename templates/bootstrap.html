@@ -74,7 +74,7 @@
 </div>
 
 <div class="row justify-content-start" style="padding-top: 70px;z-index: 1030">
-  <div class="col">
+  <div class="col" style="padding-left: 50px;">
 <p>
   <a class="btn btn-primary glass-blur btn-light" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">
   <span data-toggle="tooltip" data-html="true" data-placement="bottom" title="Show trails featuring a plant">
@@ -96,43 +96,34 @@
   <div class="col mr-sm-2">
     <div class="collapse multi-collapse" id="multiCollapseExample1">
       <div class="card card-body">
-       <div class="dropdown ">
-        <nav class="navbar navbar-light bg-light">
-          <form class="form-inline">
-            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-            <button class="btn btn-outline-success my-2 my-sm-0" type="button" id="dropdown_coins" data-toggle="dropdown" aria-haspopup="true"
-            aria-expanded="false">Add to filter</button>
-          </form>
-        </nav>
-<!--        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdown_coins" data-toggle="dropdown" aria-haspopup="true"
-          aria-expanded="false">
-          Coin
-      </button>
--->          
-        <div id="menu" class="dropdown-menu" aria-labelledby="dropdown_coins">
-          <form class="px-4 py-2 w-100">
-            <input type="search" class="form-control" id="searchCoin" placeholder="BTC" autofocus="autofocus">
-          </form>
-          <div id="menuItems"></div>
-            <div id="empty" class="dropdown-header">No coins found</div>
+
+       <div class="input-group">
+          <input type="text" class="form-control typeahead border-primary border-right-0 my-2" name="query" id="query" placeholder="Start typing something to search..." data-provide="typeahead" autocomplete="off">
+          <div class="input-group-append">
+              <button type="submit" class="btn btn-outline-primary border-left-0">
+                  <i class="fa fa-search"></i>
+              </button>
           </div>
-        </div>
-    
-        <div id="plant-to-hikes">
-          <div class="row justify-content-left" style="display: flex; align-items: center;">
-            <div class="card bg-light w-100" data-toggle="modal" data-target="#exampleModalCenter" style="max-width: 20rem;">
-              <div class="card-header">Header</div>
-                <div class="card-body">
-                  <h5 class="card-title">Light card title</h5>
-                  <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+      </div>
+
+      <div id="plant-to-hikes">
+        <div class="row justify-content-left" style="display: flex; align-items: center;">
+          <div class="card bg-light" data-toggle="modal" data-target="#exampleModalCenter" style="max-width: 20rem;" > <!--style="max-width: 20rem;" -->
+            <div class="card-header">Header</div>
+              <div class="card-body">
+                <div class="row">
+                  <img src="https://www.warrenphotographic.co.uk/photography/bigs/07292-Cute-kitten-white-background.jpg" alt="plant picture" class="img-thumbnail" style="width: 10%; height: 10%;float:left;" >
+
+                   <h7 class="card-title" style="text-shadow: none; padding-left: 10px">Light card title</h7>
                 </div>
               </div>
-              <div class="col" style="display: flex; align-items: center;">
-                <button type="button" class="btn btn-outline-danger">Remove</button>
-              </div>
+            </div>
+            <div class="col" style="display: flex; align-items: center;">
+              <button type="button" class="btn btn-outline-danger">Remove</button>
             </div>
           </div>
         </div>
+      </div>
     </div>
 
     <div class="collapse multi-collapse" id="multiCollapseExample2">
@@ -195,5 +186,6 @@
 <!-- <script src='https://html2canvas.hertzen.com/dist/html2canvas.js'></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.bundle.js" crossorigin="anonymous"></script>
+<script type="text/script" src="https://raw.githubusercontent.com/bassjobsen/Bootstrap-3-Typeahead/master/bootstrap3-typeahead.js"></script>
 </body>
 </html>

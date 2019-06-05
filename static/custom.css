@@ -48,10 +48,10 @@ body {
   /*color:black;*/
   box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3)
 }
-
-.col {
+/*
+.col .needspadding {
   padding-left: 50px;
-}
+}*/
 
 .collapse {
   color: black;
@@ -62,4 +62,18 @@ body {
   color:#BFD9C8;
   transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
+
+.btn-outline-danger:hover {
+  color:#8C452B;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.card-text {
+  clear: none;
+}
+
+.card-text::after {
+  clear: both;
+}
+
 

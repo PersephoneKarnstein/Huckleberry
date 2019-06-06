@@ -41,7 +41,7 @@ body {
     margin-bottom: 50px !important;
 }
 
-.btn {
+.btn .glass-blur {
   background-color: rgba(255,255,255,0.5) !important; 
   border: none !important;
   border-color: rgba(255,255,255,0) !important;
@@ -77,3 +77,34 @@ body {
 }
 
 
+.input-group-append {
+  box-shadow: none;
+  border-color: #90D980;
+}
+
+.border-primary {
+  border-color: #90D980 !important;
+}
+
+.btn-outline-primary {
+    color: #6c757d;
+    background-color: transparent;
+    background-image: none;
+    border-color: #90D980;
+}
+
+.btn-outline-primary:hover {
+  color:#6c757d;background-color:#90D980;border-color:#90D980
+}
+
+
+.btn-outline-danger {
+    color: #D97B59;
+    background-color: transparent;
+    background-image: none;
+    border-color: #D97B59;
+}
+
+.btn-outline-danger:hover {
+  color:#D97B59;background-color:#F7F1DA;border-color:#D97B59
+}

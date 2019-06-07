@@ -98,6 +98,11 @@ body {
 }
 
 
+
+.btn-outline-primary:focus, .btn-outline-primary.focus {
+  color:#6c757d;background-color:#90D980;border-color:#90D980
+}
+
 .btn-outline-danger {
     color: #D97B59;
     background-color: transparent;
@@ -107,4 +112,25 @@ body {
 
 .btn-outline-danger:hover {
   color:#D97B59;background-color:#F7F1DA;border-color:#D97B59
+}
+
+.img-thumbnail{
+  width: 4em; 
+  height: 4em;
+  object-fit: cover;
+  float:left;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+#multiCollapseExample1 > .card > .row > .card:hover {
+  color:#D97B59;
+  background-color:#F7F1DA;
+  border-color:#D97B59;
+  box-shadow: 0 0 1em #BFD9C8;
+  transition: color .25s ease-in-out, 
+    background-color .25s ease-in-out, 
+    border-color .25s ease-in-out, 
+    box-shadow .25s ease-in-out;
+
 }

@@ -5,7 +5,7 @@ var allPolylines = [];
 var bounds;
 var searchArea;
 var searchablePlants;
-var otherPlants;
+window.otherPlants = [];
 
 async function initMap() {
   var mapDiv = document.getElementById('map-google');
@@ -373,8 +373,8 @@ async function initMap() {
 /////////////////////////////////////////////////////////////////////////////
 
 $(document).ready(async function() {
-    // console.log("1");
-    $("#multiCollapseExample1").load('/templates/plant-to-hike.html')
+    $("#multiCollapseExample1").load('/templates/plant-to-hike.html');
+    console.log("this is html")
     await initMap();
     console.log(" ");
     searchArea = map.getBounds().toJSON();//bounds
@@ -501,12 +501,48 @@ function plantIntersect(plantIntersectionData){
   $("#query").typeahead({ source:searchablePlants });
 
   loadTrails(plantIntersectionData["visible_trails"])
-}
+};
 
 
+$("#multiCollapseExample1 .input-group-append .btn").click(function () {
+    addByPlantSearch( $("#multiCollapseExample1 .typeahead").val() )
+  }); 
 
 
+function addByPlantSearch(plantName){
+  // ask the db for the id of the plant from its name
+  // get the metadata for that plant 
+  // check if it's already in otherPlants
+  // if not, 
+        // add it to otherPlants
+        // add a card about it to the side that stores all the information so it can be passed to Modal
+  $.ajax({
+      url: '/get-plant-data.json',
+      dataType: 'json',
+      type: 'POST',
+      contentType: 'text/html; charset=utf-8',
+      data: plantName,
+      processData: false,
+      success: function(data, textStatus, jQxhr ){
+        console.log(data);
+        console.log("hi");
+        addToCards(data)
+          },
+      error: function() {
+        alert("No plants of that name were found.")
+      }
+    });
+  };
 
+
+function addToCards(plantData, otherPlants) {
+  if (!window.otherPlants.includes(plantData["plant_id"])) {
+    // add it to otherPlants
+    window.otherPlants.push(plantData["plant_id"]);
+    // add a card about it to the side that stores all the information so it can be passed to Modal 
+    $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', plantData["card_html"])
+  } else {}
+};
 
 
 

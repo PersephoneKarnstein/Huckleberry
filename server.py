@@ -4,13 +4,19 @@ from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import from_shape, to_shape
 from static.scripts.model import *
+from static.scripts.inaturalist_handler import get_inat_obs
 from sqlalchemy import func
+from sqlalchemy.orm.collections import InstrumentedList
 from shapely.geometry import Point, Polygon
 import os
 import numpy as np
 
 from flask import Flask, request, render_template, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
+
+from bs4 import BeautifulSoup
+import requests, urllib, ast, re #json
+
 
 # from static.scripts.model import connect_to_db, db
 
@@ -62,12 +68,34 @@ def multipolygon_to_xy(poly):
         polygon_bounds.add(border)
     return polygon_bounds
 
+def build_card(plant_obj):
+    page = requests.get(plant_obj.calphotos_url)
+    soup = BeautifulSoup(page.content, features="lxml")
+    photo_src = "https://calphotos.berkeley.edu/"+soup.find("img").attrs["src"]
+    alt_names = plant_obj.alternate
+    common_name = (alt_names[0].name if isinstance(alt_names, InstrumentedList) else alt_names.name)
+
+    return f"""<div class="row justify-content-left my-2" style="align-items: center;">
+        <div class="card bg-light" data-toggle="modal" data-target="#exampleModalCenter" style="width: 20rem;" > <!--style="max-width: 20rem;" -->
+          <div class="card-header">{common_name}</div>
+            <div class="card-body">
+              <div class="row">
+                <img src="{photo_src}" alt="plant picture" class="img-thumbnail" >
+                 <h7 class="card-title" style="text-shadow: none; padding-left: 10px"><i>{plant_obj.sci_name}</i></h7>
+              </div>
+            </div>
+          </div>
+          <div class="col" style="display: flex; align-items: center;">
+            <button type="button" class="btn btn-outline-danger">Remove</button>
+          </div>
+        </div>"""
+
+
 @app.route('/')
 def index():
     """Homepage."""
 
     return render_template("bootstrap.html")
-
 
 
 @app.route("/templates/plant-to-hike.html")
@@ -116,7 +144,7 @@ def get_plants():
 
     new_bounding_box = search_area.bounds #returns a 4-ple of (minx, miny, maxx, maxy)
     search_area = from_shape(search_area, srid=4326)
-    print("\n\n\n\n\n\n", new_bounding_box,"\n\n\n\n\n\n")
+    # print("\n\n\n\n\n\n", new_bounding_box,"\n\n\n\n\n\n")
     all_trails = db.session.query(Trail).filter(Trail.path.ST_Intersects(search_area)).all()
     visible_trails = trails_to_pts(all_trails)
 
@@ -137,8 +165,45 @@ def get_plants():
     return jsonify(visible_objs)
 
 
+@app.route("/get-plant-data.json", methods=["POST"])
+def get_plant_data():
+    plant_name = str(request.data.decode(encoding="utf-8"))
+    print(plant_name)
+    scis = db.session.query(Plant).filter(Plant.sci_name == plant_name).distinct().all()
+    alts = [a.plant for a in db.session.query(AltName).filter(AltName.name == plant_name).distinct().all()] 
+
+    returned_plants = list({*scis, *alts})
+    #what if there's more than one thing with that name found?
+    #I decree that we want to return the thing with the most observations on the
+    #assumption that that was probably what they were looking for
+    print(returned_plants)
+    #get number of observations
+    plantids = [a.plant_id for a in returned_plants]
+    numobs = np.asarray([db.session.query(func.count(Observation.obs_id)).filter(Observation.plant_id==pid).scalar() for pid in plantids])
+    numobs += np.asarray([len(get_inat_obs(plant.sci_name)) if get_inat_obs(plant.sci_name) else 0 for plant in returned_plants])
 
 
+    if len(returned_plants)>1:
+        most_popular_plant_tuple = sorted(zip(numobs,returned_plants), key=lambda pair: pair[0])[0]
+        most_popular_plant = most_popular_plant_tuple[1]
+        num_obs = int(most_popular_plant_tuple[0])
+    elif len(returned_plants) == 1: 
+        most_popular_plant = returned_plants[0]
+        num_obs = int(numobs[0])
+    else: 
+        print("no plants found")
+        return jsonify({})
+
+    plant_data = dict(vars(most_popular_plant)) 
+    del(plant_data["_sa_instance_state"])
+    plant_data["num_obs"] = num_obs
+    plant_data["card_html"] = build_card(most_popular_plant)
+    #add the html for the card
+    print(plant_data)
+    # for key, datum in dict(vars(most_popular_plant)):
+        # if isinstance(datum, np.int64): print(key, datum)
+
+    return jsonify(plant_data)
 
 
 
@@ -151,7 +216,7 @@ if __name__ == "__main__":
     connect_to_db(app)
 
     # Use the DebugToolbar
-    DebugToolbarExtension(app)
+    # DebugToolbarExtension(app)
 
     # Bind to PORT if defined, otherwise default to 5000.
     port = int(os.environ.get('PORT', 5000))

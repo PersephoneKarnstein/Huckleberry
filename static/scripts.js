@@ -563,12 +563,12 @@ function addToCards(plantData, otherPlants) {
     window.otherPlants.push(plantData["plant_id"]);
     // add a card about it to the side that stores all the information so it can be passed to Modal 
     $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', plantData["card_html"]);
-    $.each($("#multiCollapseExample1 > div > div > div.col > button"), function(i) {
-        $($(this)[i]).click(function() {
-             console.log($(this))
-              ($(this).parent().parent()).remove()
+    for (i of $("#multiCollapseExample1 > div > div > div.col > button")) {
+      $(i).click(function() {
+        // console.log(this);
+        $(this).parent().parent().remove()
         })
-      }) 
+      } 
   } else {}
 };
 

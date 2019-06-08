@@ -66,7 +66,8 @@ def multipolygon_to_xy(poly):
         border_points = np.asarray(polygon.xy).T
         border = [{"lat":float(x[1]), "lng":float(x[0])} for x in border_points]
         polygon_bounds.add(border)
-    return polygon_bounds
+    print(polygon_bounds)
+    return list(polygon_bounds)
 
 def build_card(plant_obj):
     page = requests.get(plant_obj.calphotos_url)
@@ -76,19 +77,23 @@ def build_card(plant_obj):
     common_name = (alt_names[0].name if isinstance(alt_names, InstrumentedList) else alt_names.name)
 
     return f"""<div class="row justify-content-left my-2" style="align-items: center;">
-        <div class="card bg-light" data-toggle="modal" data-target="#exampleModalCenter" style="width: 20rem;" > <!--style="max-width: 20rem;" -->
-          <div class="card-header">{common_name}</div>
-            <div class="card-body">
-              <div class="row">
+        <div class="card bg-light" data-toggle="modal" data-target="#exampleModalCenter" style="width: 20rem;" > 
+          <div class="card-body">
+            <div class="row">
+              <div class="col-3" style="padding-right: 0 !important; padding-left: 0 !important;">
                 <img src="{photo_src}" alt="plant picture" class="img-thumbnail" >
-                 <h7 class="card-title" style="text-shadow: none; padding-left: 10px"><i>{plant_obj.sci_name}</i></h7>
+              </div>
+              <div class="col">
+                <h6 class="card-title">{common_name}</h6>
+                <h7 class="card-title" style="text-shadow: none;"><i>{plant_obj.sci_name}</i></h7>
               </div>
             </div>
           </div>
-          <div class="col" style="display: flex; align-items: center;">
-            <button type="button" class="btn btn-outline-danger">Remove</button>
-          </div>
-        </div>"""
+        </div>
+        <div class="col" style="display: flex; align-items: center;">
+          <button type="button" class="btn btn-outline-danger">Remove</button>
+        </div>
+      """
 
 
 @app.route('/')

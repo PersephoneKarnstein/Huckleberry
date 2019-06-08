@@ -5,7 +5,8 @@ var allPolylines = [];
 var bounds;
 var searchArea;
 var searchablePlants;
-window.otherPlants = [];
+var otherPlants = [];
+var currentView;
 
 async function initMap() {
   var mapDiv = document.getElementById('map-google');
@@ -366,23 +367,30 @@ async function initMap() {
   });
   map.mapTypes.set('styled_map', styledMapType);
   map.setMapTypeId('styled_map');
-  map.addListener('bounds_changed', function() {getPlants()})
-
+  // ['zoom_changed','center_changed'].forEach( function(evt) {
+  //   map.addListener(evt, function() {getPlants()}, false);
+  //   });
+  map.addListener('bounds_changed', function() {getPlants()});
+  // debugger
+  // searchArea = map.getBounds().toJSON();//bounds
+  $("#multiCollapseExample1").load('/templates/plant-to-hike.html', addTheButton)
 };
 
 /////////////////////////////////////////////////////////////////////////////
 
-$(document).ready(async function() {
-    $("#multiCollapseExample1").load('/templates/plant-to-hike.html');
-    console.log("this is html")
-    await initMap();
-    console.log(" ");
-    searchArea = map.getBounds().toJSON();//bounds
-    // console.log("2");
-    // console.log("3")
-    });
+// $(document).ready(async function() {
+    
+    // await initMap();
+    
+// });
     
 
+function addTheButton() {
+    $("#multiCollapseExample1 .input-group-append .btn").click(function () {
+        addByPlantSearch( $("#multiCollapseExample1 .typeahead").val() );
+    $("#multiCollapseExample1 .typeahead").val("")
+      });
+}
 /////////////////////////////////////////////////////////////////////////////
 
 $(function () {
@@ -399,40 +407,41 @@ $(function () {
 
 /////////////////////////////////////////////////////////////////////////////
 
-function getTrails() {
-  let mapBounds = map.getBounds().toJSON()
-  // console.log(mapBounds)
+// function getTrails() {
+//   let mapBounds = map.getBounds().toJSON()
+//   console.log(mapBounds)
 
-  $.ajax({
-    url: '/get-trails.json',
-    dataType: 'json',
-    type: 'POST',
-    contentType: 'application/json',
-    data: JSON.stringify(mapBounds),
-    processData: false,
-    success: function(data, textStatus, jQxhr ){
-        loadTrails(data)
-        },
-    error: function() {alert("Error loading trails.")}
-  });
-}
+//   $.ajax({
+//     url: '/get-trails.json',
+//     dataType: 'json',
+//     type: 'POST',
+//     contentType: 'application/json',
+//     data: JSON.stringify(mapBounds),
+//     processData: false,
+//     success: function(data, textStatus, jQxhr ){
+//         loadTrails(data)
+//         },
+//     error: function() {alert("Error loading trails.")}
+//   });
+// };
 
 /////////////////////////////////////////////////////////////////////////////
 
-function loadTrails(jsonTrails){
+async function loadTrails(jsonTrails){
 
   for (var trail in jsonTrails){
-    if (!allPolylines.includes(trail)) {
-      allPolylines.push(trail);
-      let trailPath = new google.maps.Polyline({
-          path: jsonTrails[trail]["path"],
-          geodesic: true,
-          strokeColor: '#b50909',
-          strokeOpacity: 0.25,
-          strokeWeight: 2,
-          jointType: 2,
-          clickable: true
-            });
+    let trailPath = new google.maps.Polyline({
+        path: jsonTrails[trail]["path"],
+        geodesic: true,
+        strokeColor: '#b50909',
+        strokeOpacity: 0.25,
+        strokeWeight: 2,
+        jointType: 2,
+        clickable: true
+          });
+
+    if (!allPolylines.includes(trailPath)) {
+      allPolylines.push(trailPath);
 
       trailPath.setMap(map);
       infoWindow = new google.maps.InfoWindow();
@@ -456,16 +465,10 @@ function loadTrails(jsonTrails){
 
 /////////////////////////////////////////////////////////////////////////////
 
-// $(document).ready(function(){
-//   getPlants();
-//   var data = getPlants(); //change this!! 
-//   $("#query").typeahead({ source:data });
-// });
-
 
 function getPlants() {
-  let mapBounds = map.getBounds().toJSON();
-  otherPlants = [];//just until we write that
+  console.log("lol running getPlants again")
+  mapBounds = map.getBounds().toJSON();
   let toSend = {
     mapBoundary: mapBounds, //check if it wants the current view only or all of CA
     andOr: "and", //hardcoded for now
@@ -481,6 +484,7 @@ function getPlants() {
     data: JSON.stringify(toSend),
     processData: false,
     success: function(data, textStatus, jQxhr ){
+        console.log(data)
         plantIntersect(data);
         },
     error: function() {
@@ -489,27 +493,45 @@ function getPlants() {
   });
 };
 
-function plantIntersect(plantIntersectionData){
-  bounds = new google.maps.LatLngBounds();
-  var neCorner = new google.maps.LatLng(plantIntersectionData["new_bounds"]["north"], plantIntersectionData["new_bounds"]["east"]);//(N, E)
-  var swCorner = new google.maps.LatLng(plantIntersectionData["new_bounds"]["south"], plantIntersectionData["new_bounds"]["west"]);;
-  bounds.extend(neCorner);
-  bounds.extend(swCorner);
-  // map.fitBounds(bounds);
+async function plantIntersect(plantIntersectionData){
+  bounds = {
+    north: plantIntersectionData["new_bounds"]["north"],
+    south: plantIntersectionData["new_bounds"]["south"],
+    east: plantIntersectionData["new_bounds"]["east"],
+    west: plantIntersectionData["new_bounds"]["west"]
+  };
+  // bounds = new google.maps.LatLngBounds();
+  // var neCorner = new google.maps.LatLng(plantIntersectionData["new_bounds"]["north"], plantIntersectionData["new_bounds"]["east"]);//(N, E)
+  // var swCorner = new google.maps.LatLng(plantIntersectionData["new_bounds"]["south"], plantIntersectionData["new_bounds"]["west"]);;
+  // bounds.extend(neCorner);
+  // bounds.extend(swCorner);
+
+  // map.fitBounds(bounds); // <- this is too dangerous
 
   searchablePlants = plantIntersectionData["visible_plants"];
   $("#query").typeahead({ source:searchablePlants });
 
+
+  for (line of allPolylines){
+    line.setMap(null);
+    line = null
+  };
+  allPolylines = [];
+  drawIntersection(plantIntersectionData["intersection"]);
   loadTrails(plantIntersectionData["visible_trails"])
 };
 
+function drawIntersection(intersectionPoints){
 
-$("#multiCollapseExample1 .input-group-append .btn").click(function () {
-    addByPlantSearch( $("#multiCollapseExample1 .typeahead").val() )
-  }); 
+
+}
+
+
 
 
 function addByPlantSearch(plantName){
+  console.log("I did a thing")
+  console.log(plantName)
   // ask the db for the id of the plant from its name
   // get the metadata for that plant 
   // check if it's already in otherPlants
@@ -540,7 +562,13 @@ function addToCards(plantData, otherPlants) {
     // add it to otherPlants
     window.otherPlants.push(plantData["plant_id"]);
     // add a card about it to the side that stores all the information so it can be passed to Modal 
-    $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', plantData["card_html"])
+    $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', plantData["card_html"]);
+    $.each($("#multiCollapseExample1 > div > div > div.col > button"), function(i) {
+        $($(this)[i]).click(function() {
+             console.log($(this))
+              ($(this).parent().parent()).remove()
+        })
+      }) 
   } else {}
 };
 

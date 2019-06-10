@@ -371,6 +371,11 @@ async function initMap() {
   //   map.addListener(evt, function() {getPlants()}, false);
   //   });
   map.addListener('bounds_changed', function() {getPlants()});
+  setTimeout(() => {
+    $(".loading-page").fadeOut("slow", () => {
+      // $(".loading-page").remove()
+    })
+  }, 5000);
   // debugger
   // searchArea = map.getBounds().toJSON();//bounds
   $("#multiCollapseExample1").load('/templates/plant-to-hike.html', addTheButton)
@@ -378,12 +383,15 @@ async function initMap() {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// $(document).ready(async function() {
+$(document).ready(function() {
+    $.get("/popover", function (data) {
+      $("#cover-video").attr("src", data);
+      console.log(data)
+    })
+});
     
-    // await initMap();
-    
-// });
-    
+/////////////////////////////////////////////////////////////////////////////
+
 
 function addTheButton() {
     $("#multiCollapseExample1 .input-group-append .btn").click(function () {

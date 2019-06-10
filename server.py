@@ -8,7 +8,7 @@ from static.scripts.inaturalist_handler import get_inat_obs
 from sqlalchemy import func
 from sqlalchemy.orm.collections import InstrumentedList
 from shapely.geometry import Point, Polygon
-import os
+import os, random
 import numpy as np
 
 from flask import Flask, request, render_template, jsonify
@@ -210,7 +210,9 @@ def get_plant_data():
 
     return jsonify(plant_data)
 
-
+@app.route("/popover")
+def get_cover():
+    return "../static/resources/backgrounds/"+random.choice(os.listdir("static/resources/backgrounds"))
 
 
 if __name__ == "__main__":

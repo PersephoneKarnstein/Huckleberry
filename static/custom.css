@@ -134,3 +134,25 @@ body {
     box-shadow .25s ease-in-out;
 
 }
+
+.loading-page {
+  height: 100vh;
+  position:fixed;
+  top:0;
+  left:0;
+}
+/*
+.overlay-desc {
+  background: rgba(0,0,0,0);
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+h1 {
+  color: white;
+  font-family: 'Nobile', sans-serif;
+  font-size: 9vw;
+  text-align: center;
+}*/

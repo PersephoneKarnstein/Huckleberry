@@ -26,9 +26,24 @@
   </head>
 
 
+<!-- full screen loading page goes here -->
 
-
-
+<div class="loading-page" style="z-index: 2000;">
+  <video autoplay muted loop id="cover-video">
+    <source src="../static/resources/backgrounds/Bee.mp4" type="video/mp4">
+  </video>
+</div><!-- 
+<div class="video-container loading-page">
+     <video autoplay loop muted>
+         <source id="cover-video" src="http://www.icutpeople.com/wp-content/themes/icutpeople/assets/video/waynesworld.mp4" type="video/mp4">
+         Your browser does not support the video tag.
+     </video>
+     <div class="overlay-desc">
+        <h1>Wayne's World</h1>
+     </div>
+  </div>
+ -->
+<!-- main -->
 <section class="section">
 <div id="map-google"></div>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPf9TORElnFuqDKhpnFpTX-ByomS7h2tY&callback=initMap" async defer></script>
@@ -42,7 +57,7 @@
 <section class="glass-blur">
 <nav class="navbar navbar-expand-lg fixed-top navbar-light" style="background:inherit;text-shadow: none;box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);z-index: 1050">
   <a class="navbar-brand" href="#">
-    <img src="../static/resources/raspberry-pi-brands.svg" width="30" height="30" alt="">
+    <img src="../static/resources/huckleberry.svg" width="35" height="35" style="border-radius: 50%;vertical-align: top" alt="">
   </a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>

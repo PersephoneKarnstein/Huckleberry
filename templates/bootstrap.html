@@ -17,7 +17,9 @@
     <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 
+
     <!-- Custom styles for this template -->
+    <link href="https://fonts.googleapis.com/css?family=Seaweed+Script&display=swap" rel="stylesheet">
     <link href="../static/cover.css" rel="stylesheet">
     <link href="../static/custom.css" rel="stylesheet">
 
@@ -27,29 +29,23 @@
 
 
 <!-- full screen loading page goes here -->
-
-<div class="loading-page" style="z-index: 2000;">
+<div class="loading-page">
+<div style="z-index: 2000;">
   <video autoplay muted loop id="cover-video">
     <source src="../static/resources/backgrounds/Bee.mp4" type="video/mp4">
   </video>
-</div><!-- 
-<div class="video-container loading-page">
-     <video autoplay loop muted>
-         <source id="cover-video" src="http://www.icutpeople.com/wp-content/themes/icutpeople/assets/video/waynesworld.mp4" type="video/mp4">
-         Your browser does not support the video tag.
-     </video>
-     <div class="overlay-desc">
-        <h1>Wayne's World</h1>
-     </div>
-  </div>
- -->
-<!-- main -->
+</div>
+
+ <div class="overlay-desc">
+    <h1> Huckleberry is loading... </h1>
+ </div>
+</div>
+
+ <!-- main -->
+<div class="main" style="display: none">
 <section class="section">
 <div id="map-google"></div>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPf9TORElnFuqDKhpnFpTX-ByomS7h2tY&callback=initMap" async defer></script>
-
-
-
 </section>
 
 
@@ -71,7 +67,7 @@
         <a class="nav-link" href="#">About</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Gayness!</a>
+        <a class="nav-link" href="#">Donate</a>
       </li>
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -162,9 +158,6 @@
     </div>
   </footer>
 </div>
-
-
-
 
 
 

@@ -1,3 +1,7 @@
+/*@font-face {
+  font-family: 'Seaweed Script', cursive
+}*/
+
 body {
   text-shadow: none
   color: black;
@@ -141,7 +145,7 @@ body {
   top:0;
   left:0;
 }
-/*
+
 .overlay-desc {
   background: rgba(0,0,0,0);
   position: absolute;
@@ -149,10 +153,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 100000
 }
 h1 {
-  color: white;
-  font-family: 'Nobile', sans-serif;
+  color: rgba(255,255,255,1);
+  /*font-family: 'Nobile', sans-serif;*/
   font-size: 9vw;
   text-align: center;
-}*/
+  font-family: 'Seaweed Script', cursive;
+  }

@@ -7,8 +7,9 @@ from static.scripts.model import *
 from static.scripts.inaturalist_handler import get_inat_obs
 from sqlalchemy import func
 from sqlalchemy.orm.collections import InstrumentedList
-from shapely.geometry import Point, Polygon
-import os, random
+from shapely.geometry import Point, Polygon, MultiPolygon
+from shapely.validation import explain_validity
+import os, random, shapely
 import numpy as np
 
 from flask import Flask, request, render_template, jsonify
@@ -54,18 +55,18 @@ def trails_to_pts(sql_trail_results):
     return visible_trails
 
 def multipolygon_to_xy(poly):
-    polygon_bounds = {}
+    polygon_bounds = []
     if poly.geom_type == 'MultiPolygon':
         # do multipolygon things.
         polygons = list(poly)
     elif poly.geom_type == 'Polygon':
         polygons = [poly]
     else:
-        return {}
+        return []
     for polygon in polygons:
-        border_points = np.asarray(polygon.xy).T
+        border_points = np.asarray(polygon.exterior.xy).T
         border = [{"lat":float(x[1]), "lng":float(x[0])} for x in border_points]
-        polygon_bounds.add(border)
+        polygon_bounds.append(border)
     print(polygon_bounds)
     return list(polygon_bounds)
 
@@ -76,7 +77,7 @@ def build_card(plant_obj):
     alt_names = plant_obj.alternate
     common_name = (alt_names[0].name if isinstance(alt_names, InstrumentedList) else alt_names.name)
 
-    return f"""<div class="row justify-content-left my-2" style="align-items: center;">
+    return f"""<div class="row justify-content-left my-2 plant-id-{plant_obj.plant_id}" style="align-items: center;">
         <div class="card bg-light" data-toggle="modal" data-target="#exampleModalCenter" style="width: 20rem;" > 
           <div class="card-body">
             <div class="row">
@@ -132,39 +133,56 @@ def get_plants():
     and_or = plant_data["andOr"]
     other_plants = plant_data["intersectingPlants"]
 
+
     visible_plants = set()
 
-    if len(other_plants)==0: 
+    if len(other_plants)==100: 
         search_area = viewbox
 
     else:
         search_area = viewbox
         for intersecting_plant in other_plants:
-            plant_polys = db.engine.execute(f"SELECT DISTINCT poly FROM distribution_polygons WHERE plant_id = {intersecting_plant};").fetchall()
+            # plant_polys = db.engine.execute(f"SELECT DISTINCT poly FROM distribution_polygons WHERE plant_id = {intersecting_plant};").fetchall()
+            plant_polys = db.session.query(DistPoly.poly).filter(DistPoly.plant_id == intersecting_plant).all()
             #returns all the distribution polygons for a given plant ID
+            # print(plant_polys)
+            if isinstance(plant_polys, list):
+                # for plant_poly in plant_polys:
+                plant_polys = MultiPolygon([shapely.wkt.loads(to_shape(poly_result.poly).wkt) for poly_result in plant_polys])
+                
+            else: plant_polys = to_shape(plant_polys.poly)
 
-            search_area = search_area.intersection(to_shape(plant_polys.path)) #modify the search area to only include the places where those they intersect
+
+            if not plant_polys.is_valid:
+                print(explain_validity(plant_polys))
+                print("the buffered version would(?) be valid: "+str(plant_polys.buffer(0.0).is_valid)) 
+                plant_polys = plant_polys.buffer(0.0)
+            search_area = search_area.intersection(plant_polys) #modify the search area to only include the places where those they intersect
+            print(search_area.area)
             #currently hardcoded to AND operators for plant overlaps, maybe ad OR later
 
 
     new_bounding_box = search_area.bounds #returns a 4-ple of (minx, miny, maxx, maxy)
-    search_area = from_shape(search_area, srid=4326)
+    # print(new_bounding_box)
+    search_area_geoalc = from_shape(search_area, srid=4326)
     # print("\n\n\n\n\n\n", new_bounding_box,"\n\n\n\n\n\n")
-    all_trails = db.session.query(Trail).filter(Trail.path.ST_Intersects(search_area)).all()
+    all_trails = db.session.query(Trail).filter(Trail.path.ST_Intersects(search_area_geoalc)).all()
     visible_trails = trails_to_pts(all_trails)
 
-    all_plants = {a[0] for a in db.session.query(DistPoly.plant_id).filter(DistPoly.poly.ST_Intersects(search_area)).all()}
+    all_plants = {a[0] for a in db.session.query(DistPoly.plant_id).filter(DistPoly.poly.ST_Intersects(search_area_geoalc)).all()}
     visible_plants_sci_names = [a[0] for a in db.session.query(Plant.sci_name).filter(Plant.plant_id.in_(all_plants)).all()]
     visible_plants_alt_names = [a[0] for a in db.session.query(AltName.name).filter(AltName.plant_id.in_(all_plants)).all()]
 
+    print([[a["lng"], a["lat"]] for a in multipolygon_to_xy(search_area)[0]])
+    # print(visible_trails[:20], visible_plants_sci_names[:20])
     
     visible_objs = {"new_bounds":{"south":new_bounding_box[0], "west":new_bounding_box[1], "north":new_bounding_box[2], "east":new_bounding_box[3]},
-                    "intersection":  multipolygon_to_xy(search_area), #this I probably need to turn into a set of points
+                    "intersection":  multipolygon_to_xy(search_area)[0], #this I probably need to turn into a set of points
                     "visible_trails": visible_trails,
                     "visible_plants": visible_plants_sci_names+visible_plants_alt_names
                     }
 
-    
+    # print(visible_objs["intersection"], search_area)
 
     # print(jsonify(visible_trails))
     return jsonify(visible_objs)
@@ -181,7 +199,7 @@ def get_plant_data():
     #what if there's more than one thing with that name found?
     #I decree that we want to return the thing with the most observations on the
     #assumption that that was probably what they were looking for
-    print(returned_plants)
+    # print(returned_plants)
     #get number of observations
     plantids = [a.plant_id for a in returned_plants]
     numobs = np.asarray([db.session.query(func.count(Observation.obs_id)).filter(Observation.plant_id==pid).scalar() for pid in plantids])
@@ -204,7 +222,7 @@ def get_plant_data():
     plant_data["num_obs"] = num_obs
     plant_data["card_html"] = build_card(most_popular_plant)
     #add the html for the card
-    print(plant_data)
+    # print(plant_data)
     # for key, datum in dict(vars(most_popular_plant)):
         # if isinstance(datum, np.int64): print(key, datum)
 

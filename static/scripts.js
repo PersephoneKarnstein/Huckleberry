@@ -7,6 +7,7 @@ var searchArea;
 var searchablePlants;
 var otherPlants = [];
 var currentView;
+var intersectOutline;
 
 async function initMap() {
   var mapDiv = document.getElementById('map-google');
@@ -370,10 +371,14 @@ async function initMap() {
   // ['zoom_changed','center_changed'].forEach( function(evt) {
   //   map.addListener(evt, function() {getPlants()}, false);
   //   });
+  // google.maps.event.addListenerOnce(map, 'idle', function(){getPlants()});
+
   map.addListener('bounds_changed', function() {getPlants()});
+  
   setTimeout(() => {
+    $(".main").fadeIn();
     $(".loading-page").fadeOut("slow", () => {
-      // $(".loading-page").remove()
+      $(".loading-page").remove()
     })
   }, 5000);
   // debugger
@@ -386,7 +391,7 @@ async function initMap() {
 $(document).ready(function() {
     $.get("/popover", function (data) {
       $("#cover-video").attr("src", data);
-      console.log(data)
+      // console.log(data)
     })
 });
     
@@ -407,33 +412,14 @@ $(function () {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// $(document).click(function(e) {
-//   if (!$(e.target).is('.card-body')) {
-//       $('.collapse').collapse('hide');      
-//     }
-// });
+$(document).click(function(e) {
+  if ($(e.target).is('.glass-blur')) {
+      $('.collapse').collapse('hide');      
+    }
+});
 
 /////////////////////////////////////////////////////////////////////////////
 
-// function getTrails() {
-//   let mapBounds = map.getBounds().toJSON()
-//   console.log(mapBounds)
-
-//   $.ajax({
-//     url: '/get-trails.json',
-//     dataType: 'json',
-//     type: 'POST',
-//     contentType: 'application/json',
-//     data: JSON.stringify(mapBounds),
-//     processData: false,
-//     success: function(data, textStatus, jQxhr ){
-//         loadTrails(data)
-//         },
-//     error: function() {alert("Error loading trails.")}
-//   });
-// };
-
-/////////////////////////////////////////////////////////////////////////////
 
 async function loadTrails(jsonTrails){
 
@@ -492,6 +478,7 @@ function getPlants() {
     data: JSON.stringify(toSend),
     processData: false,
     success: function(data, textStatus, jQxhr ){
+        console.log("received data, trying to do intersection stuff");
         console.log(data)
         plantIntersect(data);
         },
@@ -524,15 +511,32 @@ async function plantIntersect(plantIntersectionData){
     line.setMap(null);
     line = null
   };
+
   allPolylines = [];
+  
   drawIntersection(plantIntersectionData["intersection"]);
   loadTrails(plantIntersectionData["visible_trails"])
 };
 
-function drawIntersection(intersectionPoints){
+async function drawIntersection(intersectionPoints){
+    if (typeof intersectOutline !== 'undefined') {
+      intersectOutline.setMap(null);
+      intersectOutline = null
+    } else {};
 
 
-}
+    intersectOutline = new google.maps.Polygon({
+      paths: intersectionPoints,
+      strokeColor: '#FF0000',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#FF0000',
+      fillOpacity: 0.1
+    });
+
+    intersectOutline.setMap(map);
+    console.log("printed the intersecton")
+  }
 
 
 
@@ -557,6 +561,7 @@ function addByPlantSearch(plantName){
         console.log(data);
         console.log("hi");
         addToCards(data)
+        getPlants();
           },
       error: function() {
         alert("No plants of that name were found.")
@@ -566,15 +571,17 @@ function addByPlantSearch(plantName){
 
 
 function addToCards(plantData, otherPlants) {
-  if (!window.otherPlants.includes(plantData["plant_id"])) {
+  if (!window.otherPlants.includes(plantData)) {
     // add it to otherPlants
-    window.otherPlants.push(plantData["plant_id"]);
+    window.otherPlants.push(plantData);
     // add a card about it to the side that stores all the information so it can be passed to Modal 
     $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', plantData["card_html"]);
     for (i of $("#multiCollapseExample1 > div > div > div.col > button")) {
       $(i).click(function() {
         // console.log(this);
         $(this).parent().parent().remove()
+        //remove from other_plants and run getPlants again
+
         })
       } 
   } else {}

@@ -72,8 +72,10 @@ def multipolygon_to_xy(poly):
 
 def build_card(plant_obj):
     page = requests.get(plant_obj.calphotos_url)
-    soup = BeautifulSoup(page.content, features="lxml")
-    photo_src = "https://calphotos.berkeley.edu/"+soup.find("img").attrs["src"]
+    if page:
+        soup = BeautifulSoup(page.content, features="lxml")
+        photo_src = "https://calphotos.berkeley.edu/"+soup.find("img").attrs["src"]
+    else: photo_src = "../static/resources/no-picture.png"
     alt_names = plant_obj.alternate
     common_name = (alt_names[0].name if isinstance(alt_names, InstrumentedList) else alt_names.name)
 
@@ -96,6 +98,8 @@ def build_card(plant_obj):
         </div>
       """
 
+def build_modal(plant_obj):
+    return
 
 @app.route('/')
 def index():

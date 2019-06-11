@@ -6,6 +6,7 @@ var bounds;
 var searchArea;
 var searchablePlants;
 var otherPlants = [];
+var bigPlantData = [];
 var currentView;
 var intersectOutline;
 
@@ -571,9 +572,10 @@ function addByPlantSearch(plantName){
 
 
 function addToCards(plantData, otherPlants) {
-  if (!window.otherPlants.includes(plantData)) {
+  if (!window.otherPlants.includes(plantData["plant_id"])) {
     // add it to otherPlants
-    window.otherPlants.push(plantData);
+    window.otherPlants.push(plantData["plant_id"]);
+    window.bigPlantData.push(plantData)
     // add a card about it to the side that stores all the information so it can be passed to Modal 
     $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', plantData["card_html"]);
     for (i of $("#multiCollapseExample1 > div > div > div.col > button")) {

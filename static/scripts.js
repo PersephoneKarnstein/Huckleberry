@@ -628,7 +628,16 @@ function editModal(event) {
   // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
   var modal = $(this);
 
-  // modal.find('img')[0].src = "cat";
+  // for (item of modal.find(".carousel-item")){
+  //   item.remove()
+  // };
+
+  for (photo of photoOptions) {
+    modal.find(".carousel-item")[0].insertAdjacentHTML("afterend", "<div class='carousel-item'><img class='d-block img-thumbnail' src='"+photo+"' alt='First slide' style='display:block;margin-left:auto;margin-right:auto;width:8em;height:8em;'></div>")
+  };
+
+  modal.find(".original-carousel")[0].remove();
+  $(modal.find(".carousel-item")[0]).addClass('active');
 
   modal.find('.modal-title').text(altNames[0]);
   modal.find('.modal-body #sci-name').text(sciName);
@@ -644,21 +653,7 @@ function editModal(event) {
 }
 
 
-
-
 /////////////////////////////////////////////////////////////////////////////
-
-
-function cycleImages(){
-      var $active = $('#cycler .active');
-      var $next = ($active.next().length > 0) ? $active.next() : $('#cycler img:first');
-      $next.css('z-index',2);//move the next image up the pile
-      $active.fadeOut(1500,function(){//fade out the top image
-    $active.css('z-index',1).show().removeClass('active');//reset the z-index and unhide the image
-          $next.css('z-index',3).addClass('active');//make the next image the top one
-      });
-    }
-
 
 
 

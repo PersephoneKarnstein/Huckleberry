@@ -16,7 +16,7 @@ from flask import Flask, request, render_template, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 
 from bs4 import BeautifulSoup
-import requests, urllib, ast, re #json
+import requests, urllib, ast, re, json
 
 
 # from static.scripts.model import connect_to_db, db
@@ -71,16 +71,65 @@ def multipolygon_to_xy(poly):
     return list(polygon_bounds)
 
 def build_card(plant_obj):
+    """ build the info card that goes in our sidebar, and embed the data we have on the plant"""
+
+    #first, check if wikipedia has a page and picture for the plant because it will probably be better than just grabbing the first one off calphotos
+    photo_options = []
+    r = requests.get(f"""https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote((plant_obj.sci_name).replace(" ", "_"))}""")
+    if r.status_code != 200:
+        nameguess = (plant_obj.sci_name).split(" ssp.")[0].split(" ×")[0].replace(" ", "_")
+        r = requests.get(f"""https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(nameguess)}""")
+
+    if r.status_code == 200:
+        if "thumbnail" in r.json().keys():
+            photo_src = r.json()["thumbnail"]["source"]
+        if "originalimage" in r.json().keys():
+            photo_options = [r.json()["originalimage"]["source"]]
+
+
     page = requests.get(plant_obj.calphotos_url)
     if page:
         soup = BeautifulSoup(page.content, features="lxml")
-        photo_src = "https://calphotos.berkeley.edu/"+soup.find("img").attrs["src"]
-    else: photo_src = "../static/resources/no-picture.png"
+        photo_options.extend(["https://calphotos.berkeley.edu/"+a.attrs["src"] for a in soup.find_all("img")])
+        photo_src = photo_options[0]
+    
+    if not photo_options:  
+        photo_src = "../static/resources/no-picture.png"
+        photo_options = [photo_src]
+    
     alt_names = plant_obj.alternate
     common_name = (alt_names[0].name if isinstance(alt_names, InstrumentedList) else alt_names.name)
 
-    return f"""<div class="row justify-content-left my-2 plant-id-{plant_obj.plant_id}" style="align-items: center;">
-        <div class="card bg-light" data-toggle="modal" data-target="#exampleModalCenter" style="width: 20rem;" > 
+    print(json.dumps(([a.name.replace("'", "!") for a in alt_names])))
+
+    return f"""<div class="row justify-content-left my-2" style="align-items: center;">
+        <div class="card bg-light" 
+                data-toggle="modal" 
+                data-target="#exampleModalCenter" 
+                data-plant-id="{plant_obj.plant_id}"
+                data-alt-names="{[a.name.replace("'", "!") for a in alt_names]}"
+                data-sci-name="{plant_obj.sci_name}"
+                data-toxicity-bool="{plant_obj.toxicity_bool}"
+                data-toxicity-notes="{plant_obj.toxicity_notes if plant_obj.toxicity_notes else 'none'}"
+                data-rare="{plant_obj.rare}"
+                data-native="{plant_obj.native}"
+                data-bloom-begin="{plant_obj.bloom_begin if plant_obj.bloom_begin else 'none'}"
+                data-bloom-end="{plant_obj.bloom_end if plant_obj.bloom_end else 'none'}"
+                data-verbose-desc="{(plant_obj.verbose_desc.replace("'", "!") if plant_obj.verbose_desc else 'none')}"
+                data-technical-desc="{plant_obj.technical_desc if plant_obj.technical_desc else 'none'}"
+                data-calphotos-url="{plant_obj.calphotos_url if plant_obj.calphotos_url else 'none'}"
+                data-characteristics-url="{plant_obj.characteristics_url}"
+                data-jepson-url="{plant_obj.jepson_url if plant_obj.jepson_url else 'none'}"
+                data-calscape-url="{plant_obj.calscape_url}"
+                data-usda-plants-url="{plant_obj.usda_plants_url if plant_obj.usda_plants_url else 'none'}"
+                data-cnps-rare-url="{plant_obj.cnps_rare_url if plant_obj.cnps_rare_url else 'none'}"
+                data-plant-type="{plant_obj.plant_type}"
+                data-min-height="{plant_obj.min_height if plant_obj.min_height else 'none'}"
+                data-max-height="{plant_obj.max_height if plant_obj.max_height else 'none'}"
+                data-plant-shape="{plant_obj.plant_shape if plant_obj.plant_shape else 'none'}"
+                data-flower-color="{plant_obj.flower_color if plant_obj.flower_color else 'none'}"
+                data-photo-options="{photo_options}"
+                style="width: 20rem;" > 
           <div class="card-body">
             <div class="row">
               <div class="col-3" style="padding-right: 0 !important; padding-left: 0 !important;">
@@ -98,8 +147,7 @@ def build_card(plant_obj):
         </div>
       """
 
-def build_modal(plant_obj):
-    return
+
 
 @app.route('/')
 def index():

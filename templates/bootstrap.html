@@ -131,19 +131,76 @@
  <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="z-index: 1050">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
+        <div class="modal-header col-12" style="align-items:center;display:block;">
+          <div class="row col-12">
+            <div id="carouselExampleSlidesOnly" class="carousel carousel-fade" data-ride="carousel" style="margin: 0 auto;">
+              <div class="carousel-inner">
+                <div class="carousel-item active">
+                  <img class="d-block img-thumbnail" src="https://www.warrenphotographic.co.uk/photography/bigs/07292-Cute-kitten-white-background.jpg" alt="First slide" style="display:block;margin-left:auto;margin-right:auto;width:8em;height:8em;">
+                </div>
+                <div class="carousel-item">
+                  <img class="d-block img-thumbnail" src="https://www.warrenphotographic.co.uk/photography/bigs/07292-Cute-kitten-white-background.jpg" alt="First slide" style="display:block;margin-left:auto;margin-right:auto;width:8em;height:8em;">
+                </div>
+                <div class="carousel-item">
+                  <img class="d-block img-thumbnail" src="https://www.warrenphotographic.co.uk/photography/bigs/07292-Cute-kitten-white-background.jpg" alt="First slide" style="display:block;margin-left:auto;margin-right:auto;width:8em;height:8em;">
+                </div>
+              </div>
+            </div>
+            <!-- <img src="https://www.warrenphotographic.co.uk/photography/bigs/07292-Cute-kitten-white-background.jpg" alt="plant picture" class="img-thumbnail" style="display:block;margin-left:auto;margin-right:auto;width:8em;height:8em;"> -->
+          </div>
+          <div class="row col-12" style="padding-left: 1em">
+            <h5 class="modal-title col-12" id="exampleModalLongTitle" style="text-align:center;">This Sure Is A Plant, Wow</h5>
+          </div>
+         </div>
         <div class="modal-body">
-          Put some plant stuff in here!
+          <div class="row col-12">
+            <h6>
+              <span>Scientific Name: </span><span id="sci-name" style="text-shadow:none;font-style:italic;">very leaf.</span>
+            </h6>
+            <h6>
+              <span>AKA: </span><span id="alt-names" style="text-shadow:none;">very leaf.</span>
+              <p></p>
+            </h6>
+          </div>
+            <!--  important -->
+          <div class="row col-12">
+            <div class="col" style="padding-left:0">
+              <h6>
+                <span>Plant type(s): </span><span id="type" style="text-shadow: none">very leaf.</span>
+              </h6>
+              <h6>
+                <span>Plant shape: </span><span id="shape" style="text-shadow: none">very leaf.</span>
+              </h6>
+              <h6>
+                <span>Height: </span><span id="height" style="text-shadow: none">very leaf.</span>
+              </h6>
+              <h6>
+                <span>Toxicity: </span><span id="toxicity" style="text-shadow:none;text-transform:capitalize;">very LEAF.</span>
+              </h6>
+            </div>
+              <!--  less important -->
+            <div class="col" style="padding-left:1em">
+              <h6>
+                <span>Rare: </span><span id="rarity" style="text-shadow: none">very leaf.</span>
+              </h6>
+              <h6>
+                <span>Blooming period: </span><span id="blooming" style="text-shadow: none">very leaf.</span>
+              </h6>
+              <h6>
+                <span>Flower color(s): </span><span id="flower-color" style="text-shadow: none">very leaf.</span>
+              </h6>
+            </div>
+          </div>
+
+          <div class="row col-12" style="padding-left: 1em">
+            <h6>
+              <p></p>
+              <span>Description: </span><span id="description" style="text-shadow: none">very leaf.</span>
+            </h6>
+          </div>
+
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
-        </div>
+
       </div>
     </div>
   </div>

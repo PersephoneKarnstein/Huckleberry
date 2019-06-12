@@ -384,7 +384,8 @@ async function initMap() {
   }, 5000);
   // debugger
   // searchArea = map.getBounds().toJSON();//bounds
-  $("#multiCollapseExample1").load('/templates/plant-to-hike.html', addTheButton)
+  $("#multiCollapseExample1").load('/templates/plant-to-hike.html', addTheButton);
+  $('#exampleModalCenter').on('show.bs.modal', editModal)
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -489,6 +490,8 @@ function getPlants() {
   });
 };
 
+/////////////////////////////////////////////////////////////////////////////
+
 async function plantIntersect(plantIntersectionData){
   bounds = {
     north: plantIntersectionData["new_bounds"]["north"],
@@ -519,6 +522,8 @@ async function plantIntersect(plantIntersectionData){
   loadTrails(plantIntersectionData["visible_trails"])
 };
 
+/////////////////////////////////////////////////////////////////////////////
+
 async function drawIntersection(intersectionPoints){
     if (typeof intersectOutline !== 'undefined') {
       intersectOutline.setMap(null);
@@ -540,7 +545,7 @@ async function drawIntersection(intersectionPoints){
   }
 
 
-
+/////////////////////////////////////////////////////////////////////////////
 
 function addByPlantSearch(plantName){
   console.log("I did a thing")
@@ -570,6 +575,7 @@ function addByPlantSearch(plantName){
     });
   };
 
+/////////////////////////////////////////////////////////////////////////////
 
 function addToCards(plantData, otherPlants) {
   if (!window.otherPlants.includes(plantData["plant_id"])) {
@@ -588,6 +594,71 @@ function addToCards(plantData, otherPlants) {
       } 
   } else {}
 };
+
+/////////////////////////////////////////////////////////////////////////////
+
+function editModal(event) {
+  console.log("modal is showing");
+  var plantRow = $(event.relatedTarget);// row that triggered the modal
+  // Extract info from data-* attributes
+  console.log(plantRow);
+  console.log(plantRow.data('alt-names'))
+
+  var sciName = plantRow.data('sci-name');
+  var altNames = eval(plantRow.data('alt-names'));
+  var plantType = plantRow.data('plant-type');
+  var plantShape = plantRow.data('plant-shape');
+  var plantHeight = plantRow.data('min-height')+"-"+plantRow.data('max-height')+" ft.";
+  var tox = plantRow.data('toxicity-notes');
+  var rare = plantRow.data('rare');
+  var bloomBegin = plantRow.data('bloom-begin');
+  var bloomEnd = plantRow.data('bloom-end');
+  var flowerCol = eval(plantRow.data('flower-color'));
+  var desc = plantRow.data('verbose-desc');
+
+  var photoOptions = eval(plantRow.data('photo-options'));
+
+  var calphotosUrl = plantRow.data('calphotos-url');
+  var characteristicsUrl = plantRow.data('characteristics-url');
+  var jepsonUrl = plantRow.data('jepson-url');
+  var calscapeUrl = plantRow.data('calscape-url');
+  var usdaPlantsUrl = plantRow.data('usda-plants-url');
+  var cnpsRareUrl = plantRow.data('cnps-rare-url');
+
+  // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+  var modal = $(this);
+
+  // modal.find('img')[0].src = "cat";
+
+  modal.find('.modal-title').text(altNames[0]);
+  modal.find('.modal-body #sci-name').text(sciName);
+  modal.find('.modal-body #alt-names').text(altNames);
+  modal.find('.modal-body #type').text(plantType);
+  modal.find('.modal-body #shape').text(plantShape);
+  modal.find('.modal-body #height').text(plantHeight);
+  modal.find('.modal-body #toxicity').text(tox);
+  modal.find('.modal-body #rarity').text(rare);
+  modal.find('.modal-body #blooming').text(bloomBegin);
+  modal.find('.modal-body #flower-color').text(flowerCol);
+  modal.find('.modal-body #description').text(desc);
+}
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+function cycleImages(){
+      var $active = $('#cycler .active');
+      var $next = ($active.next().length > 0) ? $active.next() : $('#cycler img:first');
+      $next.css('z-index',2);//move the next image up the pile
+      $active.fadeOut(1500,function(){//fade out the top image
+    $active.css('z-index',1).show().removeClass('active');//reset the z-index and unhide the image
+          $next.css('z-index',3).addClass('active');//make the next image the top one
+      });
+    }
+
 
 
 

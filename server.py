@@ -103,7 +103,7 @@ def build_card(plant_obj):
 
     print(json.dumps(([a.name.replace("'", "!") for a in alt_names])))
 
-    return f"""<div class="row justify-content-left my-2" style="align-items: center;">
+    return f"""<div class="row justify-content-left my-2 plant-id-{plant_obj.plant_id}" style="align-items: center;display:none">
         <div class="card bg-light" 
                 data-toggle="modal" 
                 data-target="#exampleModalCenter" 
@@ -111,26 +111,26 @@ def build_card(plant_obj):
                 data-alt-names="{[a.name.replace("'", "!") for a in alt_names]}"
                 data-sci-name="{plant_obj.sci_name}"
                 data-toxicity-bool="{plant_obj.toxicity_bool}"
-                data-toxicity-notes="{plant_obj.toxicity_notes if plant_obj.toxicity_notes else 'none'}"
+                data-toxicity-notes="{plant_obj.toxicity_notes.title().replace(',', '') if plant_obj.toxicity_notes else 'None'}"
                 data-rare="{plant_obj.rare}"
                 data-native="{plant_obj.native}"
-                data-bloom-begin="{plant_obj.bloom_begin if plant_obj.bloom_begin else 'none'}"
-                data-bloom-end="{plant_obj.bloom_end if plant_obj.bloom_end else 'none'}"
-                data-verbose-desc="{(plant_obj.verbose_desc.replace("'", "!").replace('"', "'") if plant_obj.verbose_desc else 'none')}"
-                data-technical-desc="{plant_obj.technical_desc if plant_obj.technical_desc else 'none'}"
-                data-calphotos-url="{plant_obj.calphotos_url if plant_obj.calphotos_url else 'none'}"
+                data-bloom-begin="{plant_obj.bloom_begin if plant_obj.bloom_begin else 'None'}"
+                data-bloom-end="{plant_obj.bloom_end if plant_obj.bloom_end else 'None'}"
+                data-verbose-desc="{(plant_obj.verbose_desc.replace("'", "!").replace('"', "'") if plant_obj.verbose_desc else 'None')}"
+                data-technical-desc="{plant_obj.technical_desc if plant_obj.technical_desc else 'None'}"
+                data-calphotos-url="{plant_obj.calphotos_url if plant_obj.calphotos_url else 'None'}"
                 data-characteristics-url="{plant_obj.characteristics_url}"
-                data-jepson-url="{plant_obj.jepson_url if plant_obj.jepson_url else 'none'}"
+                data-jepson-url="{plant_obj.jepson_url if plant_obj.jepson_url else 'None'}"
                 data-calscape-url="{plant_obj.calscape_url}"
-                data-usda-plants-url="{plant_obj.usda_plants_url if plant_obj.usda_plants_url else 'none'}"
-                data-cnps-rare-url="{plant_obj.cnps_rare_url if plant_obj.cnps_rare_url else 'none'}"
+                data-usda-plants-url="{plant_obj.usda_plants_url if plant_obj.usda_plants_url else 'None'}"
+                data-cnps-rare-url="{plant_obj.cnps_rare_url if plant_obj.cnps_rare_url else 'None'}"
                 data-plant-type="{plant_obj.plant_type}"
-                data-min-height="{plant_obj.min_height if plant_obj.min_height else 'none'}"
-                data-max-height="{plant_obj.max_height if plant_obj.max_height else 'none'}"
-                data-plant-shape="{plant_obj.plant_shape if plant_obj.plant_shape else 'none'}"
-                data-flower-color="{plant_obj.flower_color if plant_obj.flower_color else 'none'}"
+                data-min-height="{plant_obj.min_height if plant_obj.min_height else 'None'}"
+                data-max-height="{plant_obj.max_height if plant_obj.max_height else 'None'}"
+                data-plant-shape="{plant_obj.plant_shape if plant_obj.plant_shape else 'None'}"
+                data-flower-color="{plant_obj.flower_color if plant_obj.flower_color else 'None'}"
                 data-photo-options="{photo_options}"
-                style="width: 20rem;" > 
+                style="width: 20rem;" >
           <div class="card-body">
             <div class="row">
               <div class="col-3" style="padding-right: 0 !important; padding-left: 0 !important;">

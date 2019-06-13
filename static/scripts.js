@@ -402,9 +402,28 @@ $(document).ready(function() {
 
 
 function addTheButton() {
+    var loadingRow = '<div class="row justify-content-left my-2" id="replace-me" style="align-items: center;">\
+        <div class="card bg-light" style="width: 20rem;" > \
+          <div class="card-body">\
+            <div class="row">\
+              <div class="col-3" style="padding-right: 0 !important; padding-left: 0 !important;">\
+                <img src="static/resources/loading.gif" alt="loading" class="img-thumbnail" >\
+              </div>\
+              <div class="col">\
+                <h6 class="card-title" style="margin: 1.5em auto auto auto;color: #6c757d;">Loading...</h6>\
+              </div>\
+            </div>\
+          </div>\
+        </div>\
+        <div class="col" style="display: flex; align-items: center;">\
+          <button type="button" class="btn btn-outline-danger" aria-disabled="true">Remove</button>\
+        </div>';
+
+
     $("#multiCollapseExample1 .input-group-append .btn").click(function () {
         addByPlantSearch( $("#multiCollapseExample1 .typeahead").val() );
     $("#multiCollapseExample1 .typeahead").val("");
+    $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', loadingRow)
       });
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -609,7 +628,11 @@ async function addToCards(plantData, otherPlants) {
     window.bigPlantData.push(plantData);
     await getPlants();
     // add a card about it to the side that stores all the information so it can be passed to Modal 
-    $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', plantData["card_html"]);
+    $("#replace-me").fadeOut("slow", function(){
+      $(this).replaceWith(plantData["card_html"]);
+      $(".plant-id-"+plantData["plant_id"]).fadeIn("slow");
+    });
+
     for (i of $("#multiCollapseExample1 > div > div > div.col > button")) {
       $(i).click(function() {
         var delID = $($(this).parent().siblings(".card .bg-light")[0]).data("plant-id");
@@ -644,14 +667,19 @@ function editModal(event) {
   console.log(plantRow);
   console.log(plantRow.data('alt-names'))
 
+  var month_name = function(dt){
+    mlist = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ];
+    return mlist[dt.getMonth()];
+  };
+
   var sciName = plantRow.data('sci-name');
-  if (plantRow.data('alt-names') != "none"){
+  if (plantRow.data('alt-names') != "None"){
     var altNames = eval(plantRow.data('alt-names'))
   } else {var altNames = plantRow.data('alt-names')};
   // var altNames = eval(plantRow.data('alt-names'));
 
   var plantType = plantRow.data('plant-type');
-  if (plantRow.data('plant-shape') != "none"){
+  if (plantRow.data('plant-shape') != "None"){
     var plantShape = eval(plantRow.data('plant-shape'))//.replace("!", "'").replace(",", ", ")
   } else {var plantShape = plantRow.data('plant-shape')};
   // var plantShape = eval(plantRow.data('plant-shape'));
@@ -659,13 +687,13 @@ function editModal(event) {
   
   var minHeight = plantRow.data('min-height');
   var maxHeight = plantRow.data('max-height');
-  if (minHeight!="none" && maxHeight!="none"){
+  if (minHeight!="None" && maxHeight!="None"){
       var plantHeight = minHeight+"-"+maxHeight+" ft.";
-  } else if (minHeight=="none" && maxHeight!="none") {
+  } else if (minHeight=="None" && maxHeight!="None") {
     var plantHeight = "Up to "+maxHeight+" ft.";
-  } else if (minHeight!="none" && maxHeight=="none") {
+  } else if (minHeight!="None" && maxHeight=="None") {
     var plantHeight = "Over "+minHeight+" ft.";
-  } else if (minHeight=="none" && maxHeight=="none") {
+  } else if (minHeight=="None" && maxHeight=="None") {
     var plantHeight = "Unknown"
   };
 
@@ -674,14 +702,29 @@ function editModal(event) {
   var rare = plantRow.data('rare');
   var bloomBegin = plantRow.data('bloom-begin');
   var bloomEnd = plantRow.data('bloom-end');
-  if (plantRow.data('flower-color') != "none"){
+
+
+  if (bloomBegin==bloomEnd && bloomEnd!="None"){
+    var blooming = month_name(new Date(bloomEnd+"/10/2020"));
+  } else if (bloomBegin!="None" && bloomEnd!="None"){
+    var blooming = month_name(new Date(bloomBegin+"/10/2020"))+" - "+month_name(new Date(bloomEnd+"/10/2020"));
+  } else if (bloomBegin=="None" && bloomEnd!="None") {
+    var blooming = month_name(new Date(bloomEnd+"/10/2020"));
+  } else if (bloomBegin!="None" && bloomEnd=="None") {
+    var blooming = month_name(new Date(bloomBegin+"/10/2020"));
+  } else if (bloomBegin=="None" && bloomEnd=="None") {
+    var blooming = "None"
+  };
+  // var blooming = 
+
+  if (plantRow.data('flower-color') != "None"){
     var flowerCol = eval(plantRow.data('flower-color'))
   } else {var flowerCol = "None"};
   // var flowerCol = plantRow.data('flower-color');
 
   var desc = plantRow.data('verbose-desc').replace("!", "'");
 
-  if (plantRow.data('photo-options') != "none"){
+  if (plantRow.data('photo-options') != "None"){
     var photoOptions = eval(plantRow.data('photo-options'))
   } else {var photoOptions = plantRow.data('photo-options')};
   // var photoOptions = eval(plantRow.data('photo-options'));
@@ -720,19 +763,19 @@ function editModal(event) {
   modal.find('.modal-body #height').text(plantHeight);
   modal.find('.modal-body #toxicity').text(tox);
   modal.find('.modal-body #rarity').text(rare);
-  modal.find('.modal-body #blooming').text(bloomBegin);
+  modal.find('.modal-body #blooming').text(blooming);
   modal.find('.modal-body #flower-color').text(flowerCol);
   modal.find('.modal-body #description').text(desc);
 
 
-  modal.find('.modal-body #alt-names').text(modal.find('.modal-body #alt-names').text().replace(",", ", "));
-  modal.find('.modal-body #type').text(modal.find('.modal-body #type').text().replace(",", ", "));
-  modal.find('.modal-body #shape').text(modal.find('.modal-body #shape').text().replace(",", ", "));
-  modal.find('.modal-body #flower-color').text(modal.find('.modal-body #flower-color').text().replace(",", ", "));
-  modal.find('.modal-body #alt-names').text(modal.find('.modal-body #alt-names').text().replace("!", "'"));
-  modal.find('.modal-body #type').text(modal.find('.modal-body #type').text().replace("!", "'"));
-  modal.find('.modal-body #shape').text(modal.find('.modal-body #shape').text().replace("!", "'"));
-  modal.find('.modal-body #flower-color').text(modal.find('.modal-body #flower-color').text().replace("!", "'"));
+  modal.find('.modal-body #alt-names').text(modal.find('.modal-body #alt-names').text().replace(/,/g, ", "));
+  modal.find('.modal-body #type').text(modal.find('.modal-body #type').text().replace(/,/g, ", "));
+  modal.find('.modal-body #shape').text(modal.find('.modal-body #shape').text().replace(/,/g, ", "));
+  modal.find('.modal-body #flower-color').text(modal.find('.modal-body #flower-color').text().replace(/,/g, ", "));
+  modal.find('.modal-body #alt-names').text(modal.find('.modal-body #alt-names').text().replace(/!/g, "'"));
+  modal.find('.modal-body #type').text(modal.find('.modal-body #type').text().replace(/!/g, "'"));
+  modal.find('.modal-body #shape').text(modal.find('.modal-body #shape').text().replace(/!/g, "'"));
+  modal.find('.modal-body #flower-color').text(modal.find('.modal-body #flower-color').text().replace(/!/g, "'"));
 }
 
 

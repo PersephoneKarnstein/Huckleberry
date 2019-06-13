@@ -9,6 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.orm.collections import InstrumentedList
 from shapely.geometry import Point, Polygon, MultiPolygon
 from shapely.validation import explain_validity
+from shapely.geometry.polygon import orient
 import os, random, shapely
 import numpy as np
 
@@ -115,7 +116,7 @@ def build_card(plant_obj):
                 data-native="{plant_obj.native}"
                 data-bloom-begin="{plant_obj.bloom_begin if plant_obj.bloom_begin else 'none'}"
                 data-bloom-end="{plant_obj.bloom_end if plant_obj.bloom_end else 'none'}"
-                data-verbose-desc="{(plant_obj.verbose_desc.replace("'", "!") if plant_obj.verbose_desc else 'none')}"
+                data-verbose-desc="{(plant_obj.verbose_desc.replace("'", "!").replace('"', "'") if plant_obj.verbose_desc else 'none')}"
                 data-technical-desc="{plant_obj.technical_desc if plant_obj.technical_desc else 'none'}"
                 data-calphotos-url="{plant_obj.calphotos_url if plant_obj.calphotos_url else 'none'}"
                 data-characteristics-url="{plant_obj.characteristics_url}"
@@ -178,9 +179,12 @@ def get_trails():
 def get_plants():
     """we want to return a list of plants"""
     plant_data = request.get_json()
-    mapbounds = plant_data["mapBoundary"]
+    mapbounds={"south": -89.9, "west": -179.9, "north": 89.9, "east": 179.9}
+    mapbounds_actual = plant_data["mapBoundary"]
     # print(mapbounds, request.args, "\n\n\n\n\n\n\n")
-    viewbox = viewbox_to_poly(mapbounds)
+    viewbox = orient(viewbox_to_poly(mapbounds), -1)
+    viewbox_actual = orient(viewbox_to_poly(mapbounds_actual), -1) #it turns out that this request is too slow for this to be aesthetic, so 
+    # and it doesn't actually really save any time, so I', deleting it.
     
     and_or = plant_data["andOr"]
     other_plants = plant_data["intersectingPlants"]
@@ -188,7 +192,7 @@ def get_plants():
 
     visible_plants = set()
 
-    if len(other_plants)==100: 
+    if len(other_plants)==0: 
         search_area = viewbox
 
     else:
@@ -196,13 +200,15 @@ def get_plants():
         for intersecting_plant in other_plants:
             # plant_polys = db.engine.execute(f"SELECT DISTINCT poly FROM distribution_polygons WHERE plant_id = {intersecting_plant};").fetchall()
             plant_polys = db.session.query(DistPoly.poly).filter(DistPoly.plant_id == intersecting_plant).all()
+            #now we need to filter by the polygons that can be at least partially seen in our current view.
+            plant_polys = [to_shape(poly_result.poly) for poly_result in plant_polys if to_shape(poly_result.poly).intersects(viewbox_actual) or to_shape(poly_result.poly).within(viewbox_actual)]
             #returns all the distribution polygons for a given plant ID
             # print(plant_polys)
             if isinstance(plant_polys, list):
                 # for plant_poly in plant_polys:
-                plant_polys = MultiPolygon([shapely.wkt.loads(to_shape(poly_result.poly).wkt) for poly_result in plant_polys])
+                plant_polys = MultiPolygon([shapely.wkt.loads(poly_result.wkt) for poly_result in plant_polys])
                 
-            else: plant_polys = to_shape(plant_polys.poly)
+            # else: plant_polys = to_shape(plant_polys.poly)
 
 
             if not plant_polys.is_valid:
@@ -213,6 +219,13 @@ def get_plants():
             print(search_area.area)
             #currently hardcoded to AND operators for plant overlaps, maybe ad OR later
 
+    if isinstance(search_area, Polygon):
+        search_area = orient(search_area)
+    elif isinstance(search_area, MultiPolygon):
+        print("\n\n\n\n\n\n",list(search_area))
+        print(type(list(search_area)[0]))
+        MultiPolygon([shapely.wkt.loads(orient(poly).wkt) for poly in list(search_area)])
+    
 
     new_bounding_box = search_area.bounds #returns a 4-ple of (minx, miny, maxx, maxy)
     # print(new_bounding_box)
@@ -221,7 +234,10 @@ def get_plants():
     all_trails = db.session.query(Trail).filter(Trail.path.ST_Intersects(search_area_geoalc)).all()
     visible_trails = trails_to_pts(all_trails)
 
-    all_plants = {a[0] for a in db.session.query(DistPoly.plant_id).filter(DistPoly.poly.ST_Intersects(search_area_geoalc)).all()}
+    if len(other_plants) == 0:
+        all_plants = {a[0] for a in db.session.query(DistPoly.plant_id).filter(DistPoly.poly.ST_Intersects(from_shape(viewbox_actual, srid=4326))).all()}
+    else:
+        all_plants = {a[0] for a in db.session.query(DistPoly.plant_id).filter(DistPoly.poly.ST_Intersects(search_area_geoalc)).all()}
     visible_plants_sci_names = [a[0] for a in db.session.query(Plant.sci_name).filter(Plant.plant_id.in_(all_plants)).all()]
     visible_plants_alt_names = [a[0] for a in db.session.query(AltName.name).filter(AltName.plant_id.in_(all_plants)).all()]
 

@@ -9,6 +9,7 @@ var otherPlants = [];
 var bigPlantData = [];
 var currentView;
 var intersectOutline;
+var position;
 
 async function initMap() {
   var mapDiv = document.getElementById('map-google');
@@ -372,9 +373,9 @@ async function initMap() {
   // ['zoom_changed','center_changed'].forEach( function(evt) {
   //   map.addListener(evt, function() {getPlants()}, false);
   //   });
-  // google.maps.event.addListenerOnce(map, 'idle', function(){getPlants()});
+  google.maps.event.addListenerOnce(map, 'idle', function(){getPlants()});
 
-  map.addListener('bounds_changed', function() {getPlants()});
+  // map.addListener('bounds_changed', function() {getPlants()});
   
   setTimeout(() => {
     $(".main").fadeIn();
@@ -403,7 +404,7 @@ $(document).ready(function() {
 function addTheButton() {
     $("#multiCollapseExample1 .input-group-append .btn").click(function () {
         addByPlantSearch( $("#multiCollapseExample1 .typeahead").val() );
-    $("#multiCollapseExample1 .typeahead").val("")
+    $("#multiCollapseExample1 .typeahead").val("");
       });
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -533,18 +534,42 @@ async function drawIntersection(intersectionPoints){
 
     intersectOutline = new google.maps.Polygon({
       paths: intersectionPoints,
-      strokeColor: '#FF0000',
-      strokeOpacity: 0.8,
+      strokeColor: '#FFFFFF',
+      strokeOpacity: 0.1,
       strokeWeight: 2,
-      fillColor: '#FF0000',
+      fillColor: '#FFFFFF',
       fillOpacity: 0.1
     });
 
     intersectOutline.setMap(map);
+    if (otherPlants.length != 0) {pulseOutline(intersectOutline)};
+    
     console.log("printed the intersecton")
   }
 
+/////////////////////////////////////////////////////////////////////////////
 
+function pulseOutline(intersectOutline) {
+  var currentFill = 0.11;
+  var currentIncrement = +0.01
+  setInterval(function() {
+    intersectOutline.setOptions({strokeOpacity: currentFill, fillOpacity: currentFill});
+    if (currentFill>=0.75 || currentFill<=0.01){
+      currentIncrement = (-1)*currentIncrement
+    };
+    currentFill += currentIncrement;
+    // console.log(currentFill)
+  }, 75);
+}
+
+// function componentToHex(c) {
+//   var hex = c.toString(16);
+//   return hex.length == 1 ? "0" + hex : hex;
+// }
+
+// function rgbToHex(r, g, b) {
+//   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+// }
 /////////////////////////////////////////////////////////////////////////////
 
 function addByPlantSearch(plantName){
@@ -577,24 +602,39 @@ function addByPlantSearch(plantName){
 
 /////////////////////////////////////////////////////////////////////////////
 
-function addToCards(plantData, otherPlants) {
+async function addToCards(plantData, otherPlants) {
   if (!window.otherPlants.includes(plantData["plant_id"])) {
     // add it to otherPlants
     window.otherPlants.push(plantData["plant_id"]);
-    window.bigPlantData.push(plantData)
+    window.bigPlantData.push(plantData);
+    await getPlants();
     // add a card about it to the side that stores all the information so it can be passed to Modal 
     $("#multiCollapseExample1 > .card > .result-row")[0].insertAdjacentHTML('afterend', plantData["card_html"]);
     for (i of $("#multiCollapseExample1 > div > div > div.col > button")) {
       $(i).click(function() {
-        // console.log(this);
+        var delID = $($(this).parent().siblings(".card .bg-light")[0]).data("plant-id");
+        console.log(delID);
+        position = $.inArray(delID, otherPlants);
+        console.log(position);
+        console.log((position < 0));
+        console.log("doin it")
+        fixIndex()
+
         $(this).parent().parent().remove()
+        getPlants()
         //remove from other_plants and run getPlants again
 
         })
       } 
-  } else {}
-};
+  }};
 
+function fixIndex(){
+  if (position <= 0) {
+          position = otherPlants.length + position
+        };
+  console.log(position);
+  if ( ~position ) otherPlants.splice(position, 1) //delete that ID from 'otherPlants'
+}
 /////////////////////////////////////////////////////////////////////////////
 
 function editModal(event) {
@@ -605,18 +645,46 @@ function editModal(event) {
   console.log(plantRow.data('alt-names'))
 
   var sciName = plantRow.data('sci-name');
-  var altNames = eval(plantRow.data('alt-names'));
+  if (plantRow.data('alt-names') != "none"){
+    var altNames = eval(plantRow.data('alt-names'))
+  } else {var altNames = plantRow.data('alt-names')};
+  // var altNames = eval(plantRow.data('alt-names'));
+
   var plantType = plantRow.data('plant-type');
-  var plantShape = plantRow.data('plant-shape');
-  var plantHeight = plantRow.data('min-height')+"-"+plantRow.data('max-height')+" ft.";
+  if (plantRow.data('plant-shape') != "none"){
+    var plantShape = eval(plantRow.data('plant-shape'))//.replace("!", "'").replace(",", ", ")
+  } else {var plantShape = plantRow.data('plant-shape')};
+  // var plantShape = eval(plantRow.data('plant-shape'));
+
+  
+  var minHeight = plantRow.data('min-height');
+  var maxHeight = plantRow.data('max-height');
+  if (minHeight!="none" && maxHeight!="none"){
+      var plantHeight = minHeight+"-"+maxHeight+" ft.";
+  } else if (minHeight=="none" && maxHeight!="none") {
+    var plantHeight = "Up to "+maxHeight+" ft.";
+  } else if (minHeight!="none" && maxHeight=="none") {
+    var plantHeight = "Over "+minHeight+" ft.";
+  } else if (minHeight=="none" && maxHeight=="none") {
+    var plantHeight = "Unknown"
+  };
+
+
   var tox = plantRow.data('toxicity-notes');
   var rare = plantRow.data('rare');
   var bloomBegin = plantRow.data('bloom-begin');
   var bloomEnd = plantRow.data('bloom-end');
-  var flowerCol = eval(plantRow.data('flower-color'));
-  var desc = plantRow.data('verbose-desc');
+  if (plantRow.data('flower-color') != "none"){
+    var flowerCol = eval(plantRow.data('flower-color'))
+  } else {var flowerCol = "None"};
+  // var flowerCol = plantRow.data('flower-color');
 
-  var photoOptions = eval(plantRow.data('photo-options'));
+  var desc = plantRow.data('verbose-desc').replace("!", "'");
+
+  if (plantRow.data('photo-options') != "none"){
+    var photoOptions = eval(plantRow.data('photo-options'))
+  } else {var photoOptions = plantRow.data('photo-options')};
+  // var photoOptions = eval(plantRow.data('photo-options'));
 
   var calphotosUrl = plantRow.data('calphotos-url');
   var characteristicsUrl = plantRow.data('characteristics-url');
@@ -628,6 +696,10 @@ function editModal(event) {
   // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
   var modal = $(this);
 
+  for (item of modal.find(".carousel-item")) {
+    if (!$(item).hasClass("original-carousel")) {
+      item.remove()
+    }};
   // for (item of modal.find(".carousel-item")){
   //   item.remove()
   // };
@@ -638,8 +710,9 @@ function editModal(event) {
 
   modal.find(".original-carousel")[0].remove();
   $(modal.find(".carousel-item")[0]).addClass('active');
+  $(modal.find(".carousel-item")[0]).addClass('original-carousel');
 
-  modal.find('.modal-title').text(altNames[0]);
+  modal.find('.modal-title').text(altNames[0].replace("!", "'"));
   modal.find('.modal-body #sci-name').text(sciName);
   modal.find('.modal-body #alt-names').text(altNames);
   modal.find('.modal-body #type').text(plantType);
@@ -650,6 +723,16 @@ function editModal(event) {
   modal.find('.modal-body #blooming').text(bloomBegin);
   modal.find('.modal-body #flower-color').text(flowerCol);
   modal.find('.modal-body #description').text(desc);
+
+
+  modal.find('.modal-body #alt-names').text(modal.find('.modal-body #alt-names').text().replace(",", ", "));
+  modal.find('.modal-body #type').text(modal.find('.modal-body #type').text().replace(",", ", "));
+  modal.find('.modal-body #shape').text(modal.find('.modal-body #shape').text().replace(",", ", "));
+  modal.find('.modal-body #flower-color').text(modal.find('.modal-body #flower-color').text().replace(",", ", "));
+  modal.find('.modal-body #alt-names').text(modal.find('.modal-body #alt-names').text().replace("!", "'"));
+  modal.find('.modal-body #type').text(modal.find('.modal-body #type').text().replace("!", "'"));
+  modal.find('.modal-body #shape').text(modal.find('.modal-body #shape').text().replace("!", "'"));
+  modal.find('.modal-body #flower-color').text(modal.find('.modal-body #flower-color').text().replace("!", "'"));
 }
 
 

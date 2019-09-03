@@ -1,21 +1,73 @@
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-import urllib, lxml, time
+from browsermobproxy import Server
+
+import urllib, lxml, time, psutil, functools, pdb
 from bs4 import BeautifulSoup
 
-firefox_profile = webdriver.FirefoxProfile()
-firefox_profile.set_preference('permissions.default.image', 2)
-firefox_profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
-
-driver = webdriver.Firefox(firefox_profile=firefox_profile)
+# server = Server("/usr/local/lib/python3.7/site-packages/browsermob-proxy-2.1.4/bin/browsermob-proxy") #! needs to be changed for virtualenv
+# server.start()
+# proxy = server.create_proxy()
 
 
-url = "https://www.hikingproject.com/directory/8007121/california"
+# firefox_profile = webdriver.FirefoxProfile()
+# firefox_profile.set_preference('permissions.default.image', 2)
+# firefox_profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
+# firefox_profile.set_proxy(proxy.selenium_proxy())
 
-driver.get(url)
-soup = BeautifulSoup(driver.page_source, features="lxml")
-last_height = driver.execute_script("return document.body.scrollHeight")
+# driver = webdriver.Firefox(firefox_profile=firefox_profile, proxy=proxy.selenium_proxy())
+
+#####################################################################
+def clean_url(func):
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        firefox_profile = webdriver.FirefoxProfile()
+        firefox_profile.set_preference('permissions.default.image', 2)
+        firefox_profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
+        driver = webdriver.Firefox(firefox_profile=firefox_profile)
+
+        func(driver, *args, **kwargs)
+
+        # server.stop()
+        driver.quit()
+
+        return
+    return wrapped
+
+def clean_scraper(func):
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        for proc in psutil.process_iter():
+            # check whether the process name matches
+            try:
+                if proc.name() == "browsermob-proxy" or\
+                     proc.name() == "firefox":
+                    proc.kill()
+            except psutil.NoSuchProcess:
+                pass
+
+        server = Server("/usr/local/lib/python3.7/site-packages/browsermob-proxy-2.1.4/bin/browsermob-proxy") #! needs to be changed for virtualenv
+
+        server.start()
+        time.sleep(1)
+        proxy = server.create_proxy()
+        firefox_profile = webdriver.FirefoxProfile()
+        firefox_profile.set_proxy(proxy.selenium_proxy()) #! this raises a deprecation warning but the alternative does not work.
+        driver = webdriver.Firefox(firefox_profile=firefox_profile)#, proxy=proxy.selenium_proxy())
+        func(proxy, driver, *args, **kwargs)
+
+        # server.stop()
+        # driver.quit()
+
+        return
+    return wrapped
+
+#####################################################################
 
 def get_total_hikes(soup):
     """Once on the page, read how many hikes it thinks there are 
@@ -31,7 +83,7 @@ def get_total_hikes(soup):
     return 0
 
 
-def get_hike_ids(soup=soup, total=0, driver=driver):
+def get_hike_ids(soup, driver, total=0):
     """Because it doesn't seem like there's a consistent numbering scheme
         for how to identify the IDs of trails within a given state; 
         physically reads through the list of hikes in the state, and outputs
@@ -84,5 +136,42 @@ def get_hike_ids(soup=soup, total=0, driver=driver):
                 f.writelines(a+"\n" for a in found_urls)
         print("Done.")
 
-total = get_total_hikes(soup)
-get_hike_ids(total=total)
+
+@clean_url
+def write_state_hikes_to_file(driver, url="https://www.hikingproject.com/directory/8007121/california"):
+    driver.get(url)
+    soup = BeautifulSoup(driver.page_source, features="lxml")
+    last_height = driver.execute_script("return document.body.scrollHeight")
+
+    total = get_total_hikes(soup)
+    get_hike_ids(soup, driver, total=total)
+
+
+@clean_scraper
+def get_hike_data_from_url(proxy, driver, url):#, proxy=proxy, driver=driver):
+    proxy.new_har("hike")
+    driver.get(url)
+    element = driver.find_element_by_xpath('//*[@id="map-and-ride-finder-container"]')
+    # actions = ActionChains(driver)
+    driver.execute_script("arguments[0].scrollIntoView();", element)
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CLASS_NAME , 'mapboxgl-marker')))
+
+    print("doot")
+    time.sleep(15)
+
+    ##########
+    #   ...
+    ##########
+    # print(proxy.har)
+    entries = proxy.har['log']["entries"]
+    print("-"*20)
+    for entry in entries:
+        if 'vector.pbf?' in entry['request']['url']:
+            print(entry, "\n\n")
+    
+
+    pdb.set_trace()
+
+url = "https://www.hikingproject.com/trail/7005207/half-dome"
+
+get_hike_data_from_url(url)
